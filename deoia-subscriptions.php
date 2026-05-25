@@ -2,7 +2,7 @@
 /**
  * Plugin Name: DEOIA Subscriptions
  * Description: Formulario de suscripción y Checkout Session de Stripe (REST).
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: DEOIA
  * Text Domain: deoia-subscriptions
  *
@@ -15,14 +15,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.0.0' );
+define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.1.0' );
 define( 'DEOIA_SUBSCRIPTIONS_FILE', __FILE__ );
 define( 'DEOIA_SUBSCRIPTIONS_DIR', plugin_dir_path( __FILE__ ) );
+
+require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/account-portal-shortcode.php';
 
 /**
  * Registra assets (el shortcode hace enqueue al renderizar).
  */
 function deoia_subscriptions_register_assets(): void {
+	wp_register_style(
+		'deoia-account-portal',
+		plugins_url( 'assets/css/account-portal.css', DEOIA_SUBSCRIPTIONS_FILE ),
+		array(),
+		DEOIA_SUBSCRIPTIONS_VERSION
+	);
+
 	wp_register_script(
 		'deoia-subscription-form',
 		plugins_url( 'assets/js/subscription-form.js', DEOIA_SUBSCRIPTIONS_FILE ),
@@ -88,6 +97,7 @@ function deoia_subscriptions_render_form_shortcode(): string {
 	return (string) ob_get_clean();
 }
 add_shortcode( 'deoia_subscription_form', 'deoia_subscriptions_render_form_shortcode' );
+add_shortcode( 'deoia_account_portal', 'deoia_subscriptions_render_account_portal_shortcode' );
 
 /**
  * Respuesta de error REST uniforme.

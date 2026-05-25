@@ -1,0 +1,234 @@
+/**
+ * Portal DEOIA — dashboard placeholder (deoia-subscriptions).
+ * Estilos autocontenidos; no depende del theme.
+ */
+
+.deoia-account-portal {
+	--deoia-portal-bg: #f8fafc;
+	--deoia-portal-surface: #ffffff;
+	--deoia-portal-border: #e2e8f0;
+	--deoia-portal-text: #0f172a;
+	--deoia-portal-muted: #64748b;
+	--deoia-portal-accent: #7c3aed;
+	--deoia-portal-accent-soft: #ede9fe;
+	--deoia-portal-ok: #059669;
+	--deoia-portal-warn: #d97706;
+	--deoia-portal-radius: 12px;
+	--deoia-portal-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+
+	max-width: 960px;
+	margin: 1.5rem auto 2.5rem;
+	padding: 0 1rem;
+	color: var(--deoia-portal-text);
+	font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+	font-size: 1rem;
+	line-height: 1.5;
+}
+
+.deoia-account-portal__banner {
+	background: var(--deoia-portal-accent-soft);
+	border: 1px solid #c4b5fd;
+	border-radius: var(--deoia-portal-radius);
+	padding: 1rem 1.25rem;
+	margin-bottom: 1.5rem;
+}
+
+.deoia-account-portal__banner strong {
+	display: block;
+	margin-bottom: 0.35rem;
+	color: #5b21b6;
+}
+
+.deoia-account-portal__banner p {
+	margin: 0;
+	color: #4c1d95;
+	font-size: 0.9375rem;
+}
+
+.deoia-account-portal__header {
+	margin-bottom: 1.5rem;
+}
+
+.deoia-account-portal__title {
+	margin: 0 0 0.25rem;
+	font-size: 1.75rem;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+}
+
+.deoia-account-portal__subtitle {
+	margin: 0;
+	color: var(--deoia-portal-muted);
+	font-size: 1rem;
+}
+
+.deoia-account-portal__empty {
+	background: var(--deoia-portal-surface);
+	border: 1px dashed var(--deoia-portal-border);
+	border-radius: var(--deoia-portal-radius);
+	padding: 1.5rem;
+}
+
+.deoia-account-portal__section-title {
+	margin: 0 0 0.75rem;
+	font-size: 1.125rem;
+}
+
+.deoia-account-portal__hint {
+	margin: 0.5rem 0 0;
+	color: var(--deoia-portal-muted);
+	font-size: 0.9375rem;
+}
+
+.deoia-account-portal__hint code {
+	background: var(--deoia-portal-bg);
+	padding: 0.15rem 0.4rem;
+	border-radius: 4px;
+	font-size: 0.875rem;
+}
+
+.deoia-account-portal__notice {
+	border-radius: var(--deoia-portal-radius);
+	padding: 0.875rem 1rem;
+	margin-bottom: 1rem;
+}
+
+.deoia-account-portal__notice--warn {
+	background: #fffbeb;
+	border: 1px solid #fcd34d;
+	color: #92400e;
+}
+
+.deoia-account-portal__notice p {
+	margin: 0;
+}
+
+.deoia-account-portal__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 1rem;
+}
+
+.deoia-account-portal__card {
+	background: var(--deoia-portal-surface);
+	border: 1px solid var(--deoia-portal-border);
+	border-radius: var(--deoia-portal-radius);
+	box-shadow: var(--deoia-portal-shadow);
+	padding: 1.125rem 1.25rem;
+}
+
+.deoia-account-portal__card--primary {
+	grid-column: 1 / -1;
+	border-color: #c4b5fd;
+}
+
+.deoia-account-portal__card--wide {
+	grid-column: 1 / -1;
+}
+
+.deoia-account-portal__card-title {
+	margin: 0 0 0.75rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--deoia-portal-muted);
+}
+
+.deoia-account-portal__label {
+	margin: 0 0 0.25rem;
+	font-size: 0.8125rem;
+	color: var(--deoia-portal-muted);
+}
+
+.deoia-account-portal__value {
+	margin: 0;
+	font-size: 1.0625rem;
+	font-weight: 600;
+}
+
+.deoia-account-portal__meta {
+	margin: 1rem 0 0;
+	display: grid;
+	gap: 0.75rem;
+}
+
+.deoia-account-portal__meta dt {
+	font-size: 0.75rem;
+	color: var(--deoia-portal-muted);
+	margin-bottom: 0.15rem;
+}
+
+.deoia-account-portal__meta dd {
+	margin: 0;
+	font-size: 0.9375rem;
+}
+
+.deoia-account-portal__badge {
+	display: inline-block;
+	padding: 0.2rem 0.55rem;
+	border-radius: 999px;
+	font-size: 0.8125rem;
+	font-weight: 600;
+}
+
+.deoia-account-portal__badge--ok {
+	background: #d1fae5;
+	color: var(--deoia-portal-ok);
+}
+
+.deoia-account-portal__badge--warn {
+	background: #fef3c7;
+	color: var(--deoia-portal-warn);
+}
+
+.deoia-account-portal__badge--neutral {
+	background: var(--deoia-portal-bg);
+	color: var(--deoia-portal-muted);
+}
+
+.deoia-account-portal__actions {
+	margin-top: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.5rem;
+}
+
+.deoia-account-portal__btn {
+	display: inline-block;
+	padding: 0.55rem 1.1rem;
+	border-radius: 8px;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: not-allowed;
+}
+
+.deoia-account-portal__btn--demo {
+	background: var(--deoia-portal-muted);
+	color: #fff;
+	opacity: 0.85;
+}
+
+.deoia-account-portal__btn-note {
+	color: var(--deoia-portal-muted);
+	font-size: 0.8125rem;
+}
+
+.deoia-account-portal__messages {
+	margin: 0;
+	padding-left: 1.2rem;
+	color: var(--deoia-portal-muted);
+	font-size: 0.9375rem;
+}
+
+.deoia-account-portal__messages li + li {
+	margin-top: 0.35rem;
+}
+
+@media (min-width: 720px) {
+	.deoia-account-portal__card--primary {
+		grid-column: span 2;
+	}
+}
