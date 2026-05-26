@@ -120,6 +120,14 @@ function deoia_subscriptions_portal_status_modifier( string $status_label ): str
 function deoia_subscriptions_render_account_portal_shortcode(): string {
 	wp_enqueue_style( 'deoia-account-portal' );
 
+	if (
+		function_exists( 'deoia_subscriptions_portal_is_access_page_view' )
+		&& deoia_subscriptions_portal_is_access_page_view()
+		&& function_exists( 'deoia_subscriptions_render_portal_access_request_view' )
+	) {
+		return deoia_subscriptions_render_portal_access_request_view();
+	}
+
 	$slug_raw      = deoia_subscriptions_portal_get_installation_slug_from_request();
 	$has_slug      = $slug_raw !== '';
 	$slug_valid    = $has_slug && deoia_subscriptions_portal_is_slug_format_valid( $slug_raw );

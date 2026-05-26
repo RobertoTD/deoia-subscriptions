@@ -99,8 +99,90 @@
 	color: #92400e;
 }
 
+.deoia-account-portal__notice--ok {
+	background: #ecfdf5;
+	border: 1px solid #6ee7b7;
+	color: #065f46;
+}
+
 .deoia-account-portal__notice p {
 	margin: 0;
+}
+
+.deoia-account-portal__access-form-wrap {
+	background: var(--deoia-portal-surface);
+	border: 1px solid var(--deoia-portal-border);
+	border-radius: var(--deoia-portal-radius);
+	box-shadow: var(--deoia-portal-shadow);
+	padding: 1.5rem;
+	max-width: 28rem;
+}
+
+.deoia-account-portal__form {
+	margin: 0;
+}
+
+.deoia-account-portal__field {
+	margin: 0 0 1rem;
+}
+
+.deoia-account-portal__field:last-of-type {
+	margin-bottom: 1.25rem;
+}
+
+.deoia-account-portal__input {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+	margin-top: 0.35rem;
+	padding: 0.55rem 0.75rem;
+	border: 1px solid var(--deoia-portal-border);
+	border-radius: 8px;
+	font-size: 1rem;
+	line-height: 1.4;
+	color: var(--deoia-portal-text);
+	background: #fff;
+}
+
+.deoia-account-portal__input:focus {
+	outline: 2px solid var(--deoia-portal-accent-soft);
+	border-color: var(--deoia-portal-accent);
+}
+
+.deoia-account-portal__slug-readonly {
+	display: inline-block;
+	margin-top: 0.35rem;
+	padding: 0.25rem 0.5rem;
+	background: var(--deoia-portal-bg);
+	border-radius: 4px;
+	font-size: 0.9375rem;
+}
+
+.deoia-account-portal__form-actions {
+	margin: 0;
+}
+
+.deoia-account-portal__submit {
+	display: inline-block;
+	padding: 0.6rem 1.25rem;
+	border: none;
+	border-radius: 8px;
+	background: var(--deoia-portal-accent);
+	color: #fff;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.deoia-account-portal__submit:hover,
+.deoia-account-portal__submit:focus {
+	background: #6d28d9;
+}
+
+.deoia-account-portal__submit:focus {
+	outline: 2px solid var(--deoia-portal-accent-soft);
+	outline-offset: 2px;
 }
 
 .deoia-account-portal__grid {
