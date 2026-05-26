@@ -16,6 +16,40 @@ const DEOIA_PORTAL_ACCESS_REQUEST_NEUTRAL_MESSAGE = 'Si los datos son correctos,
 const DEOIA_PORTAL_ACCESS_REQUEST_ACTION = 'deoia_portal_access_request';
 
 /**
+ * Lee y sanitiza ?installation= desde la query string (formulario access).
+ *
+ * @return string Slug vacío si no viene o no es string usable.
+ */
+function deoia_subscriptions_portal_get_installation_slug_from_request(): string {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Vista pública; sin mutación.
+	if ( ! isset( $_GET['installation'] ) ) {
+		return '';
+	}
+	$raw = wp_unslash( $_GET['installation'] );
+	if ( ! is_string( $raw ) ) {
+		return '';
+	}
+	return sanitize_text_field( trim( $raw ) );
+}
+
+/**
+ * Validación ligera de formato de slug (solo UI; no consulta backend).
+ *
+ * @param string $slug
+ * @return bool
+ */
+function deoia_subscriptions_portal_is_slug_format_valid( string $slug ): bool {
+	if ( $slug === '' ) {
+		return false;
+	}
+	$length = strlen( $slug );
+	if ( $length < 3 || $length > 40 ) {
+		return false;
+	}
+	return (bool) preg_match( '/^[a-z0-9]+(-[a-z0-9]+)*$/', $slug );
+}
+
+/**
  * Resolves backend POST /portal/access/request URL.
  */
 function deoia_subscriptions_backend_portal_request_url(): ?string {
