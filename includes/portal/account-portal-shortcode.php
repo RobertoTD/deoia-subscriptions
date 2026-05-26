@@ -120,14 +120,23 @@ function deoia_subscriptions_portal_status_modifier( string $status_label ): str
 function deoia_subscriptions_render_account_portal_shortcode(): string {
 	wp_enqueue_style( 'deoia-account-portal' );
 
-	$slug_raw = deoia_subscriptions_portal_get_installation_slug_from_request();
-	$has_slug = $slug_raw !== '';
-	$slug_valid = $has_slug && deoia_subscriptions_portal_is_slug_format_valid( $slug_raw );
-	$context  = $slug_valid ? deoia_subscriptions_portal_build_placeholder_context( $slug_raw ) : null;
+	$slug_raw      = deoia_subscriptions_portal_get_installation_slug_from_request();
+	$has_slug      = $slug_raw !== '';
+	$slug_valid    = $has_slug && deoia_subscriptions_portal_is_slug_format_valid( $slug_raw );
+	$context       = $slug_valid ? deoia_subscriptions_portal_build_placeholder_context( $slug_raw ) : null;
+	$portal_error  = function_exists( 'deoia_subscriptions_portal_get_portal_error_from_request' )
+		? deoia_subscriptions_portal_get_portal_error_from_request()
+		: '';
 
 	ob_start();
 	?>
 	<div class="deoia-account-portal" id="deoia-account-portal">
+		<?php if ( $portal_error === 'invalid_link' ) : ?>
+			<section class="deoia-account-portal__notice deoia-account-portal__notice--warn" role="alert">
+				<p><?php echo esc_html__( 'El enlace no es válido o expiró. Solicita uno nuevo.', 'deoia-subscriptions' ); ?></p>
+			</section>
+		<?php endif; ?>
+
 		<aside class="deoia-account-portal__banner" role="note">
 			<strong><?php echo esc_html__( 'Vista inicial del portal — datos de demostración', 'deoia-subscriptions' ); ?></strong>
 			<p><?php echo esc_html__( 'Nada de lo que ves aquí proviene de tu cuenta real. El acceso seguro y los datos en vivo llegarán en etapas posteriores.', 'deoia-subscriptions' ); ?></p>
