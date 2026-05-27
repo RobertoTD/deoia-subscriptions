@@ -277,6 +277,18 @@
 	gap: 0.5rem;
 }
 
+.deoia-account-portal__actions--billing {
+	margin-top: 1rem;
+}
+
+.deoia-account-portal__billing-form {
+	margin: 0;
+}
+
+.deoia-account-portal__hint--billing {
+	margin-top: 0.75rem;
+}
+
 .deoia-account-portal__btn {
 	display: inline-block;
 	padding: 0.55rem 1.1rem;

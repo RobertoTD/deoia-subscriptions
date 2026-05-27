@@ -372,6 +372,12 @@ function deoia_subscriptions_portal_render_dashboard_real( array $dashboard ): s
 					</span>
 				</p>
 			<?php endif; ?>
+			<?php
+			if ( function_exists( 'deoia_subscriptions_portal_render_billing_button' ) ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in billing render.
+				echo deoia_subscriptions_portal_render_billing_button( $subscription );
+			}
+			?>
 		</article>
 
 		<article class="deoia-account-portal__card">
@@ -514,10 +520,16 @@ function deoia_subscriptions_render_portal_account_dashboard_view(): string {
 		$wrapper_class .= ' deoia-account-portal--live';
 	}
 
+	$billing_notices = function_exists( 'deoia_subscriptions_portal_render_billing_prg_notices' )
+		? deoia_subscriptions_portal_render_billing_prg_notices()
+		: '';
+
 	ob_start();
 	?>
 	<div class="<?php echo esc_attr( $wrapper_class ); ?>" id="deoia-account-portal">
 		<?php
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in billing PRG notices.
+		echo $billing_notices;
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner HTML built with escaping helpers.
 		echo $inner;
 		?>

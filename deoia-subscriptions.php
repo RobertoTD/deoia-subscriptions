@@ -2,7 +2,7 @@
 /**
  * Plugin Name: DEOIA Subscriptions
  * Description: Formulario de suscripción y Checkout Session de Stripe (REST).
- * Version: 1.4.0
+ * Version: 1.5.0
  * Author: DEOIA
  * Text Domain: deoia-subscriptions
  *
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.4.0' );
+define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.5.0' );
 define( 'DEOIA_SUBSCRIPTIONS_FILE', __FILE__ );
 define( 'DEOIA_SUBSCRIPTIONS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -23,9 +23,12 @@ require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/account-portal-shortcode
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-access-verify.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-access-request.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-dashboard.php';
+require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-billing.php';
 
 add_action( 'template_redirect', 'deoia_subscriptions_portal_handle_magic_link_verify', 1 );
 add_action( 'template_redirect', 'deoia_subscriptions_portal_handle_access_request_post', 2 );
+add_action( 'template_redirect', 'deoia_subscriptions_portal_handle_billing_post', 3 );
+add_filter( 'allowed_redirect_hosts', 'deoia_subscriptions_portal_allow_stripe_billing_redirect_host' );
 
 /**
  * Registra assets (el shortcode hace enqueue al renderizar).
