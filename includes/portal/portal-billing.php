@@ -196,31 +196,6 @@ function deoia_subscriptions_portal_redirect_after_billing_error(): void {
 
 /**
  * @param array<string, mixed>|null $subscription
- */
-function deoia_subscriptions_portal_subscription_bool( ?array $subscription, string $key ): bool {
-	if ( $subscription === null ) {
-		return false;
-	}
-
-	if ( ! array_key_exists( $key, $subscription ) ) {
-		return false;
-	}
-
-	$value = $subscription[ $key ];
-	if ( is_bool( $value ) ) {
-		return $value;
-	}
-
-	if ( is_string( $value ) ) {
-		$lower = strtolower( trim( $value ) );
-		return $lower === '1' || $lower === 'true' || $lower === 'yes';
-	}
-
-	return ! empty( $value );
-}
-
-/**
- * @param array<string, mixed>|null $subscription
  * @return array{mode: string, label: string, hint: string}
  */
 function deoia_subscriptions_portal_resolve_billing_button_ui( ?array $subscription ): array {
@@ -266,10 +241,11 @@ function deoia_subscriptions_portal_resolve_billing_button_ui( ?array $subscript
 
 	$payment_issue = in_array( $stripe_status, array( 'past_due', 'unpaid', 'incomplete' ), true );
 	$cancel_at_period_end = deoia_subscriptions_portal_subscription_bool( $subscription, 'cancel_at_period_end' );
+	$is_cancel_scheduled  = deoia_subscriptions_portal_subscription_bool( $subscription, 'is_cancel_scheduled' );
 
 	if ( $payment_issue ) {
 		$label = __( 'Actualizar pago', 'deoia-subscriptions' );
-	} elseif ( $cancel_at_period_end ) {
+	} elseif ( $cancel_at_period_end || $is_cancel_scheduled ) {
 		$label = __( 'Revisar suscripción', 'deoia-subscriptions' );
 	} else {
 		$label = __( 'Gestionar pago y suscripción', 'deoia-subscriptions' );

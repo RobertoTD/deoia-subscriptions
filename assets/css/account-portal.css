@@ -105,6 +105,12 @@
 	color: #065f46;
 }
 
+.deoia-account-portal__notice--subscription-scheduled {
+	background: #eff6ff;
+	border: 1px solid #bfdbfe;
+	color: #1e3a8a;
+}
+
 .deoia-account-portal__notice p {
 	margin: 0;
 }

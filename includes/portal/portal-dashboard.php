@@ -223,6 +223,109 @@ function deoia_subscriptions_portal_fetch_dashboard( string $session_token ): ar
 }
 
 /**
+ * @param array<string, mixed>|null $subscription
+ * @param string                    $key
+ */
+function deoia_subscriptions_portal_subscription_bool( ?array $subscription, string $key ): bool {
+	if ( $subscription === null || ! array_key_exists( $key, $subscription ) ) {
+		return false;
+	}
+
+	$value = $subscription[ $key ];
+	if ( is_bool( $value ) ) {
+		return $value;
+	}
+
+	if ( is_string( $value ) ) {
+		$lower = strtolower( trim( $value ) );
+		return $lower === '1' || $lower === 'true' || $lower === 'yes';
+	}
+
+	return ! empty( $value );
+}
+
+/**
+ * @param string $value ISO 8601 timestamp from API.
+ */
+function deoia_subscriptions_portal_format_subscription_date_for_display( string $value ): string {
+	$value = trim( $value );
+	if ( $value === '' ) {
+		return '';
+	}
+
+	try {
+		$dt = new DateTime( $value );
+	} catch ( Exception $e ) {
+		return esc_html( $value );
+	}
+
+	$timestamp = $dt->getTimestamp();
+
+	if ( class_exists( 'IntlDateFormatter' ) ) {
+		$timezone = function_exists( 'wp_timezone' ) ? wp_timezone() : null;
+		$formatter = new IntlDateFormatter(
+			'es_ES',
+			IntlDateFormatter::LONG,
+			IntlDateFormatter::NONE,
+			$timezone
+		);
+		if ( $formatter ) {
+			$formatted = $formatter->format( $dt );
+			if ( is_string( $formatted ) && $formatted !== '' ) {
+				return esc_html( $formatted );
+			}
+		}
+	}
+
+	if ( function_exists( 'wp_date' ) ) {
+		return esc_html( wp_date( 'j F Y', $timestamp ) );
+	}
+
+	return esc_html( date_i18n( 'j F Y', $timestamp ) );
+}
+
+/**
+ * @param array<string, mixed>|null $subscription
+ */
+function deoia_subscriptions_portal_render_scheduled_cancellation_notice( ?array $subscription ): string {
+	if ( $subscription === null || ! deoia_subscriptions_portal_subscription_bool( $subscription, 'is_cancel_scheduled' ) ) {
+		return '';
+	}
+
+	$cancel_at = deoia_subscriptions_portal_dashboard_section_string( $subscription, 'cancel_at' );
+	$period_end = deoia_subscriptions_portal_dashboard_section_string( $subscription, 'current_period_end' );
+
+	$date_display = $cancel_at !== '' ? $cancel_at : $period_end;
+	if ( $date_display !== '' ) {
+		$date_display = deoia_subscriptions_portal_format_subscription_date_for_display( $date_display );
+	}
+
+	if ( $date_display !== '' ) {
+		$message = sprintf(
+			/* translators: %s: scheduled cancellation date */
+			esc_html__(
+				'Has solicitado cancelar tu suscripción. Tus beneficios Pro seguirán activos hasta el %s. Después de esa fecha tu agenda volverá al plan Freemium y no se realizarán nuevos cobros.',
+				'deoia-subscriptions'
+			),
+			$date_display
+		);
+	} else {
+		$message = esc_html__(
+			'Has solicitado cancelar tu suscripción. Tus beneficios Pro seguirán activos hasta la fecha indicada en tu suscripción. Después de esa fecha tu agenda volverá al plan Freemium y no se realizarán nuevos cobros.',
+			'deoia-subscriptions'
+		);
+	}
+
+	ob_start();
+	?>
+	<div class="deoia-account-portal__notice deoia-account-portal__notice--subscription-scheduled" role="status">
+		<p><?php echo $message; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built with esc_html/sprintf above. ?></p>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
  * @param array<string, mixed>|null $section
  * @param string                    $key
  * @return string
@@ -373,6 +476,7 @@ function deoia_subscriptions_portal_render_dashboard_real( array $dashboard ): s
 				</p>
 			<?php endif; ?>
 			<?php
+			echo deoia_subscriptions_portal_render_scheduled_cancellation_notice( $subscription );
 			if ( function_exists( 'deoia_subscriptions_portal_render_billing_button' ) ) {
 				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in billing render.
 				echo deoia_subscriptions_portal_render_billing_button( $subscription );
