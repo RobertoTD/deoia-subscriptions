@@ -245,6 +245,79 @@ function deoia_subscriptions_portal_subscription_bool( ?array $subscription, str
 }
 
 /**
+ * @param array<string, mixed>|null $subscription
+ */
+function deoia_subscriptions_portal_subscription_payment_attention_required( ?array $subscription ): bool {
+	if ( $subscription === null ) {
+		return false;
+	}
+
+	$stripe_status = strtolower(
+		deoia_subscriptions_portal_dashboard_section_string( $subscription, 'stripe_status' )
+	);
+
+	return in_array( $stripe_status, array( 'past_due', 'unpaid', 'incomplete' ), true );
+}
+
+/**
+ * @param array<string, mixed>|null $subscription
+ * @return array{label: string, modifier: string}|null
+ */
+function deoia_subscriptions_portal_resolve_subscription_billing_badge( ?array $subscription ): ?array {
+	if ( $subscription === null ) {
+		return null;
+	}
+
+	$billing_state = deoia_subscriptions_portal_dashboard_section_string( $subscription, 'billing_state' );
+	if ( $billing_state === '' ) {
+		return null;
+	}
+
+	if ( deoia_subscriptions_portal_subscription_payment_attention_required( $subscription ) ) {
+		return array(
+			'label'    => __( 'Pago pendiente', 'deoia-subscriptions' ),
+			'modifier' => 'deoia-account-portal__badge--warn',
+		);
+	}
+
+	if ( $billing_state === 'active' ) {
+		return array(
+			'label'    => __( 'Activa', 'deoia-subscriptions' ),
+			'modifier' => 'deoia-account-portal__badge--ok',
+		);
+	}
+
+	return array(
+		'label'    => $billing_state,
+		'modifier' => deoia_subscriptions_portal_status_modifier( $billing_state ),
+	);
+}
+
+/**
+ * @param array<string, mixed>|null $subscription
+ */
+function deoia_subscriptions_portal_render_payment_attention_notice( ?array $subscription ): string {
+	if ( ! deoia_subscriptions_portal_subscription_payment_attention_required( $subscription ) ) {
+		return '';
+	}
+
+	ob_start();
+	?>
+	<div class="deoia-account-portal__notice deoia-account-portal__notice--warn" role="alert">
+		<p>
+			<?php
+			echo esc_html__(
+				'Tu último pago no pudo completarse. Actualiza tu método de pago para recuperar el acceso Pro.',
+				'deoia-subscriptions'
+			);
+			?>
+		</p>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
  * @param string $value ISO 8601 timestamp from API.
  */
 function deoia_subscriptions_portal_format_subscription_date_for_display( string $value ): string {
@@ -373,10 +446,9 @@ function deoia_subscriptions_portal_render_dashboard_real( array $dashboard ): s
 	$inst_status = deoia_subscriptions_portal_dashboard_section_string( $installation, 'status' );
 	$inst_type   = deoia_subscriptions_portal_dashboard_section_string( $installation, 'installation_type' );
 
-	$plan_tier      = deoia_subscriptions_portal_dashboard_section_string( $subscription, 'plan_tier' );
-	$stripe_status  = deoia_subscriptions_portal_dashboard_section_string( $subscription, 'stripe_status' );
-	$billing_state  = deoia_subscriptions_portal_dashboard_section_string( $subscription, 'billing_state' );
-	$email          = deoia_subscriptions_portal_dashboard_section_string( $account, 'email_canonical' );
+	$plan_tier     = deoia_subscriptions_portal_dashboard_section_string( $subscription, 'plan_tier' );
+	$billing_badge = deoia_subscriptions_portal_resolve_subscription_billing_badge( $subscription );
+	$email         = deoia_subscriptions_portal_dashboard_section_string( $account, 'email_canonical' );
 
 	$messages = array();
 	if ( isset( $dashboard['messages'] ) && is_array( $dashboard['messages'] ) ) {
@@ -463,20 +535,19 @@ function deoia_subscriptions_portal_render_dashboard_real( array $dashboard ): s
 				<p class="deoia-account-portal__label"><?php echo esc_html__( 'Plan', 'deoia-subscriptions' ); ?></p>
 				<p class="deoia-account-portal__value"><?php echo esc_html( $plan_tier ); ?></p>
 			<?php endif; ?>
-			<?php if ( $stripe_status !== '' ) : ?>
-				<p class="deoia-account-portal__label"><?php echo esc_html__( 'Estado Stripe', 'deoia-subscriptions' ); ?></p>
-				<p class="deoia-account-portal__value"><?php echo esc_html( $stripe_status ); ?></p>
-			<?php endif; ?>
-			<?php if ( $billing_state !== '' ) : ?>
+			<?php if ( $billing_badge !== null ) : ?>
 				<p class="deoia-account-portal__label"><?php echo esc_html__( 'Facturación', 'deoia-subscriptions' ); ?></p>
 				<p>
-					<span class="deoia-account-portal__badge <?php echo esc_attr( deoia_subscriptions_portal_status_modifier( $billing_state ) ); ?>">
-						<?php echo esc_html( $billing_state ); ?>
+					<span class="deoia-account-portal__badge <?php echo esc_attr( $billing_badge['modifier'] ); ?>">
+						<?php echo esc_html( $billing_badge['label'] ); ?>
 					</span>
 				</p>
 			<?php endif; ?>
 			<?php
-			echo deoia_subscriptions_portal_render_scheduled_cancellation_notice( $subscription );
+			echo deoia_subscriptions_portal_render_payment_attention_notice( $subscription );
+			if ( ! deoia_subscriptions_portal_subscription_payment_attention_required( $subscription ) ) {
+				echo deoia_subscriptions_portal_render_scheduled_cancellation_notice( $subscription );
+			}
 			if ( function_exists( 'deoia_subscriptions_portal_render_billing_button' ) ) {
 				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in billing render.
 				echo deoia_subscriptions_portal_render_billing_button( $subscription );
