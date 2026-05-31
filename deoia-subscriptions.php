@@ -2,7 +2,7 @@
 /**
  * Plugin Name: DEOIA Subscriptions
  * Description: Formulario de suscripción y Checkout Session de Stripe (REST).
- * Version: 1.5.0
+ * Version: 1.5.4
  * Author: DEOIA
  * Text Domain: deoia-subscriptions
  *
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.5.0' );
+define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.5.4' );
 define( 'DEOIA_SUBSCRIPTIONS_FILE', __FILE__ );
 define( 'DEOIA_SUBSCRIPTIONS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -24,6 +24,7 @@ require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-access-verify.php
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-access-request.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-dashboard.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-billing.php';
+require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/subscription-thank-you-shortcode.php';
 
 add_action( 'template_redirect', 'deoia_subscriptions_portal_handle_magic_link_verify', 1 );
 add_action( 'template_redirect', 'deoia_subscriptions_portal_handle_access_request_post', 2 );
@@ -37,6 +38,13 @@ function deoia_subscriptions_register_assets(): void {
 	wp_register_style(
 		'deoia-account-portal',
 		plugins_url( 'assets/css/account-portal.css', DEOIA_SUBSCRIPTIONS_FILE ),
+		array(),
+		DEOIA_SUBSCRIPTIONS_VERSION
+	);
+
+	wp_register_style(
+		'deoia-subscription-form',
+		plugins_url( 'assets/css/subscription-form.css', DEOIA_SUBSCRIPTIONS_FILE ),
 		array(),
 		DEOIA_SUBSCRIPTIONS_VERSION
 	);
@@ -70,38 +78,74 @@ add_action( 'wp_enqueue_scripts', 'deoia_subscriptions_register_assets' );
  * @return string
  */
 function deoia_subscriptions_render_form_shortcode(): string {
+	wp_enqueue_style( 'deoia-subscription-form' );
 	wp_enqueue_script( 'deoia-subscription-form' );
+
+	$logo_url       = plugins_url( 'assets/img/deoia-citas-logo.svg', DEOIA_SUBSCRIPTIONS_FILE );
+	$public_domain  = defined( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) && is_string( constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) ) && constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) !== ''
+		? (string) constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' )
+		: 'deoia.com';
 
 	ob_start();
 	?>
-	<form class="deoia-subscription-form" id="deoia-subscription-form" novalidate>
-		<p>
-			<label for="deoia-agenda-name"><?php echo esc_html__( 'Nombre de tu agenda', 'deoia-subscriptions' ); ?></label><br>
-			<input type="text" id="deoia-agenda-name" name="agenda_name" required autocomplete="organization">
-		</p>
-		<p class="deoia-subscription-form__slug-status" id="deoia-slug-status" hidden></p>
-		<p class="deoia-subscription-form__slug-field" id="deoia-slug-field-wrap" hidden>
-			<label for="deoia-desired-slug"><?php echo esc_html__( 'Tu dirección de acceso', 'deoia-subscriptions' ); ?></label><br>
-			<input type="text" id="deoia-desired-slug" name="desired_slug_display" autocomplete="off" inputmode="url">
-			<span class="deoia-subscription-form__slug-suffix">.<?php echo esc_html__( defined( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) && is_string( constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) ) && constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) !== '' ? (string) constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) : 'deoia.com' ); ?></span>
-			<br>
-			<small><?php echo esc_html__( 'Elige cómo se verá la dirección de tu agenda.', 'deoia-subscriptions' ); ?></small>
-		</p>
-		<p class="deoia-subscription-form__slug-suggestions" id="deoia-slug-suggestions" hidden></p>
-		<input type="hidden" id="deoia-desired-slug-hidden" name="desired_slug" value="">
-		<p>
-			<label for="deoia-email"><?php echo esc_html__( 'Correo electrónico', 'deoia-subscriptions' ); ?></label><br>
-			<input type="email" id="deoia-email" name="email" required autocomplete="email">
-		</p>
-		<p>
-			<label for="deoia-owner-name"><?php echo esc_html__( 'Tu nombre', 'deoia-subscriptions' ); ?></label><br>
-			<input type="text" id="deoia-owner-name" name="owner_name" required autocomplete="name">
-		</p>
-		<p class="deoia-subscription-form__errors" id="deoia-subscription-errors" hidden></p>
-		<p>
-			<button type="submit" id="deoia-subscription-submit"><?php echo esc_html__( 'Continuar al pago', 'deoia-subscriptions' ); ?></button>
-		</p>
-	</form>
+	<section class="deoia-subscription-portal" aria-labelledby="deoia-subscription-portal-title">
+		<header class="deoia-subscription-portal__brand">
+			<div class="deoia-subscription-portal__mark">
+				<img
+					class="deoia-subscription-portal__logo"
+					src="<?php echo esc_url( $logo_url ); ?>"
+					width="40"
+					height="40"
+					alt=""
+					decoding="async"
+				>
+				<h2 id="deoia-subscription-portal-title" class="deoia-subscription-portal__title"><?php echo esc_html__( 'DEOIA Citas', 'deoia-subscriptions' ); ?></h2>
+			</div>
+			<p class="deoia-subscription-portal__headline"><?php echo esc_html__( 'Activa tu agenda profesional en minutos', 'deoia-subscriptions' ); ?></p>
+			<p class="deoia-subscription-portal__description"><?php echo esc_html__( 'Crea tu agenda PRO con instalación lista para usar, acceso tipo app y funciones premium para gestionar tus citas.', 'deoia-subscriptions' ); ?></p>
+		</header>
+
+		<p class="deoia-subscription-portal__promo"><?php echo esc_html__( 'Promoción Junio: $100 MXN al mes congelado', 'deoia-subscriptions' ); ?></p>
+
+		<div class="deoia-subscription-portal__card">
+			<form class="deoia-subscription-form" id="deoia-subscription-form" novalidate>
+				<p class="deoia-subscription-form__field">
+					<label for="deoia-agenda-name"><?php echo esc_html__( 'Nombre de tu agenda', 'deoia-subscriptions' ); ?></label>
+					<input type="text" id="deoia-agenda-name" name="agenda_name" required autocomplete="organization">
+				</p>
+				<p class="deoia-subscription-form__slug-status" id="deoia-slug-status" hidden></p>
+				<p class="deoia-subscription-form__slug-field" id="deoia-slug-field-wrap" hidden>
+					<label for="deoia-desired-slug"><?php echo esc_html__( 'Tu dirección de acceso', 'deoia-subscriptions' ); ?></label>
+					<span class="deoia-subscription-form__slug-row">
+						<input type="text" id="deoia-desired-slug" name="desired_slug_display" autocomplete="off" inputmode="url">
+						<span class="deoia-subscription-form__slug-suffix">.<?php echo esc_html( $public_domain ); ?></span>
+					</span>
+					<small class="deoia-subscription-form__slug-hint"><?php echo esc_html__( 'Elige cómo se verá la dirección de tu agenda.', 'deoia-subscriptions' ); ?></small>
+				</p>
+				<p class="deoia-subscription-form__slug-suggestions" id="deoia-slug-suggestions" hidden></p>
+				<input type="hidden" id="deoia-desired-slug-hidden" name="desired_slug" value="">
+				<p class="deoia-subscription-form__field">
+					<label for="deoia-email"><?php echo esc_html__( 'Correo electrónico', 'deoia-subscriptions' ); ?></label>
+					<input type="email" id="deoia-email" name="email" required autocomplete="email">
+				</p>
+				<p class="deoia-subscription-form__field">
+					<label for="deoia-owner-name"><?php echo esc_html__( 'Tu nombre', 'deoia-subscriptions' ); ?></label>
+					<input type="text" id="deoia-owner-name" name="owner_name" required autocomplete="name">
+				</p>
+				<p class="deoia-subscription-form__errors" id="deoia-subscription-errors" hidden></p>
+				<p class="deoia-subscription-form__actions">
+					<button type="submit" class="deoia-subscription-form__submit" id="deoia-subscription-submit"><?php echo esc_html__( 'Continuar al pago', 'deoia-subscriptions' ); ?></button>
+				</p>
+				<p class="deoia-subscription-form__trust"><?php echo esc_html__( 'Pago seguro. Después del pago recibirás el acceso a tu agenda.', 'deoia-subscriptions' ); ?></p>
+			</form>
+		</div>
+
+		<ul class="deoia-subscription-portal__features" aria-label="<?php echo esc_attr__( 'Incluye', 'deoia-subscriptions' ); ?>">
+			<li><?php echo esc_html__( 'Agenda lista para usar', 'deoia-subscriptions' ); ?></li>
+			<li><?php echo esc_html__( 'App instalable en tu celular', 'deoia-subscriptions' ); ?></li>
+			<li><?php echo esc_html__( 'Funciones PRO activas', 'deoia-subscriptions' ); ?></li>
+		</ul>
+	</section>
 	<?php
 	return (string) ob_get_clean();
 }
