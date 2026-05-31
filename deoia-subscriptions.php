@@ -89,26 +89,27 @@ function deoia_subscriptions_render_form_shortcode(): string {
 	ob_start();
 	?>
 	<section class="deoia-subscription-portal" aria-labelledby="deoia-subscription-portal-title">
-		<header class="deoia-subscription-portal__brand">
-			<div class="deoia-subscription-portal__mark">
-				<img
-					class="deoia-subscription-portal__logo"
-					src="<?php echo esc_url( $logo_url ); ?>"
-					width="40"
-					height="40"
-					alt=""
-					decoding="async"
-				>
-				<h2 id="deoia-subscription-portal-title" class="deoia-subscription-portal__title"><?php echo esc_html__( 'DEOIA Citas', 'deoia-subscriptions' ); ?></h2>
-			</div>
-			<p class="deoia-subscription-portal__headline"><?php echo esc_html__( 'Activa tu agenda profesional en minutos', 'deoia-subscriptions' ); ?></p>
-			<p class="deoia-subscription-portal__description"><?php echo esc_html__( 'Crea tu agenda PRO con instalación lista para usar, acceso tipo app y funciones premium para gestionar tus citas.', 'deoia-subscriptions' ); ?></p>
-		</header>
+		<div class="deoia-subscription-portal__surface">
+			<header class="deoia-subscription-portal__brand">
+				<div class="deoia-subscription-portal__mark">
+					<img
+						class="deoia-subscription-portal__logo"
+						src="<?php echo esc_url( $logo_url ); ?>"
+						width="40"
+						height="40"
+						alt=""
+						decoding="async"
+					>
+					<h2 id="deoia-subscription-portal-title" class="deoia-subscription-portal__title"><?php echo esc_html__( 'DEOIA Citas', 'deoia-subscriptions' ); ?></h2>
+				</div>
+				<p class="deoia-subscription-portal__headline"><?php echo esc_html__( 'Activa tu agenda profesional en minutos', 'deoia-subscriptions' ); ?></p>
+				<p class="deoia-subscription-portal__description"><?php echo esc_html__( 'Crea tu agenda PRO con instalación lista para usar, acceso tipo app y funciones premium para gestionar tus citas.', 'deoia-subscriptions' ); ?></p>
+			</header>
 
-		<p class="deoia-subscription-portal__promo"><?php echo esc_html__( 'Promoción Junio: $100 MXN al mes congelado', 'deoia-subscriptions' ); ?></p>
+			<p class="deoia-subscription-portal__promo"><?php echo esc_html__( 'Promoción Junio: $100 MXN al mes congelado', 'deoia-subscriptions' ); ?></p>
 
-		<div class="deoia-subscription-portal__card">
-			<form class="deoia-subscription-form" id="deoia-subscription-form" novalidate>
+			<div class="deoia-subscription-portal__card">
+				<form class="deoia-subscription-form" id="deoia-subscription-form" novalidate>
 				<p class="deoia-subscription-form__field">
 					<label for="deoia-agenda-name"><?php echo esc_html__( 'Nombre de tu agenda', 'deoia-subscriptions' ); ?></label>
 					<input type="text" id="deoia-agenda-name" name="agenda_name" required autocomplete="organization">
@@ -137,14 +138,15 @@ function deoia_subscriptions_render_form_shortcode(): string {
 					<button type="submit" class="deoia-subscription-form__submit" id="deoia-subscription-submit"><?php echo esc_html__( 'Continuar al pago', 'deoia-subscriptions' ); ?></button>
 				</p>
 				<p class="deoia-subscription-form__trust"><?php echo esc_html__( 'Pago seguro. Después del pago recibirás el acceso a tu agenda.', 'deoia-subscriptions' ); ?></p>
-			</form>
-		</div>
+				</form>
+			</div>
 
-		<ul class="deoia-subscription-portal__features" aria-label="<?php echo esc_attr__( 'Incluye', 'deoia-subscriptions' ); ?>">
-			<li><?php echo esc_html__( 'Agenda lista para usar', 'deoia-subscriptions' ); ?></li>
-			<li><?php echo esc_html__( 'App instalable en tu celular', 'deoia-subscriptions' ); ?></li>
-			<li><?php echo esc_html__( 'Funciones PRO activas', 'deoia-subscriptions' ); ?></li>
-		</ul>
+			<ul class="deoia-subscription-portal__features" aria-label="<?php echo esc_attr__( 'Incluye', 'deoia-subscriptions' ); ?>">
+				<li><?php echo esc_html__( 'Agenda lista para usar', 'deoia-subscriptions' ); ?></li>
+				<li><?php echo esc_html__( 'App instalable en tu celular', 'deoia-subscriptions' ); ?></li>
+				<li><?php echo esc_html__( 'Funciones PRO activas', 'deoia-subscriptions' ); ?></li>
+			</ul>
+		</div>
 	</section>
 	<?php
 	return (string) ob_get_clean();
