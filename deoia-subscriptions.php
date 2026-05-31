@@ -2,7 +2,7 @@
 /**
  * Plugin Name: DEOIA Subscriptions
  * Description: Formulario de suscripción y Checkout Session de Stripe (REST).
- * Version: 1.5.4
+ * Version: 1.5.5
  * Author: DEOIA
  * Text Domain: deoia-subscriptions
  *
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.5.4' );
+define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.5.7' );
 define( 'DEOIA_SUBSCRIPTIONS_FILE', __FILE__ );
 define( 'DEOIA_SUBSCRIPTIONS_DIR', plugin_dir_path( __FILE__ ) );
 

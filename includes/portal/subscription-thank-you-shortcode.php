@@ -42,9 +42,6 @@ function deoia_subscriptions_render_thank_you_shortcode(): string {
 			<h2 id="deoia-subscription-thanks-title" class="deoia-subscription-thanks__title"><?php echo esc_html__( 'Tu agenda se está preparando', 'deoia-subscriptions' ); ?></h2>
 			<p class="deoia-subscription-thanks__lead"><?php echo esc_html__( 'Estamos configurando tu agenda DEOIA Citas. Cuando esté lista, recibirás un correo con el enlace de acceso y las instrucciones para entrar.', 'deoia-subscriptions' ); ?></p>
 			<p class="deoia-subscription-thanks__hint"><?php echo esc_html__( 'Esto puede tardar unos minutos. Revisa también la carpeta de spam o promociones si no ves el correo.', 'deoia-subscriptions' ); ?></p>
-			<p class="deoia-subscription-thanks__actions">
-				<a class="deoia-subscription-thanks__cta" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php echo esc_html__( 'Volver al inicio', 'deoia-subscriptions' ); ?></a>
-			</p>
 		</div>
 	</section>
 	<?php
