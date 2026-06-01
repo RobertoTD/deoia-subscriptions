@@ -411,6 +411,32 @@ function deoia_subscriptions_portal_dashboard_section_string( ?array $section, s
 }
 
 /**
+ * App entry URL on the provisioned tenant (wp-agenda-automatizada /agenda-app/).
+ *
+ * @param string $site_url Tenant root from dashboard (links.agenda_url or agenda.site_url).
+ */
+function deoia_subscriptions_portal_resolve_agenda_app_url( string $site_url ): string {
+	$site_url = trim( $site_url );
+	if ( $site_url === '' ) {
+		return '';
+	}
+
+	return trailingslashit( $site_url ) . 'agenda-app/';
+}
+
+/**
+ * @param string $plan_tier Raw plan tier from API (e.g. pro).
+ */
+function deoia_subscriptions_portal_format_plan_tier_label( string $plan_tier ): string {
+	$plan_tier = trim( $plan_tier );
+	if ( $plan_tier === '' ) {
+		return '';
+	}
+
+	return strtoupper( $plan_tier );
+}
+
+/**
  * @param array<string, mixed> $dashboard
  * @return string
  */
@@ -420,46 +446,29 @@ function deoia_subscriptions_portal_render_dashboard_real( array $dashboard ): s
 	$agenda = isset( $dashboard['agenda'] ) && is_array( $dashboard['agenda'] )
 		? $dashboard['agenda']
 		: null;
-	$installation = isset( $dashboard['installation'] ) && is_array( $dashboard['installation'] )
-		? $dashboard['installation']
-		: null;
 	$subscription = isset( $dashboard['subscription'] ) && is_array( $dashboard['subscription'] )
 		? $dashboard['subscription']
-		: null;
-	$account = isset( $dashboard['account'] ) && is_array( $dashboard['account'] )
-		? $dashboard['account']
 		: null;
 	$links = isset( $dashboard['links'] ) && is_array( $dashboard['links'] )
 		? $dashboard['links']
 		: array();
 
-	$agenda_name   = deoia_subscriptions_portal_dashboard_section_string( $agenda, 'agenda_name' );
-	$agenda_slug   = deoia_subscriptions_portal_dashboard_section_string( $agenda, 'slug' );
-	$agenda_site   = deoia_subscriptions_portal_dashboard_section_string( $agenda, 'site_url' );
-	$agenda_wp     = deoia_subscriptions_portal_dashboard_section_string( $agenda, 'wp_login_url' );
-	$link_agenda   = deoia_subscriptions_portal_dashboard_pick_string( $links['agenda_url'] ?? '' );
-	$link_wp       = deoia_subscriptions_portal_dashboard_pick_string( $links['wp_login_url'] ?? '' );
+	$agenda_name = deoia_subscriptions_portal_dashboard_section_string( $agenda, 'agenda_name' );
+	$agenda_slug = deoia_subscriptions_portal_dashboard_section_string( $agenda, 'slug' );
+	$agenda_site = deoia_subscriptions_portal_dashboard_section_string( $agenda, 'site_url' );
+	$link_agenda = deoia_subscriptions_portal_dashboard_pick_string( $links['agenda_url'] ?? '' );
 
-	$open_agenda_url = $link_agenda !== '' ? $link_agenda : $agenda_site;
-	$wp_login_url    = $link_wp !== '' ? $link_wp : $agenda_wp;
+	$tenant_site_url = $link_agenda !== '' ? $link_agenda : $agenda_site;
+	$agenda_app_url  = deoia_subscriptions_portal_resolve_agenda_app_url( $tenant_site_url );
 
-	$inst_status = deoia_subscriptions_portal_dashboard_section_string( $installation, 'status' );
-	$inst_type   = deoia_subscriptions_portal_dashboard_section_string( $installation, 'installation_type' );
-
-	$plan_tier     = deoia_subscriptions_portal_dashboard_section_string( $subscription, 'plan_tier' );
+	$plan_tier_raw = deoia_subscriptions_portal_dashboard_section_string( $subscription, 'plan_tier' );
+	$plan_tier     = deoia_subscriptions_portal_format_plan_tier_label( $plan_tier_raw );
 	$billing_badge = deoia_subscriptions_portal_resolve_subscription_billing_badge( $subscription );
-	$email         = deoia_subscriptions_portal_dashboard_section_string( $account, 'email_canonical' );
 
-	$messages = array();
-	if ( isset( $dashboard['messages'] ) && is_array( $dashboard['messages'] ) ) {
-		foreach ( $dashboard['messages'] as $message ) {
-			if ( is_string( $message ) && trim( $message ) !== '' ) {
-				$messages[] = trim( $message );
-			}
-		}
+	$agenda_lead = __( 'Gestiona tus citas desde la app de agenda.', 'deoia-subscriptions' );
+	if ( $agenda_name !== '' && ( $agenda_slug === '' || strcasecmp( $agenda_name, $agenda_slug ) !== 0 ) ) {
+		$agenda_lead = $agenda_name;
 	}
-
-	$title = $agenda_name !== '' ? $agenda_name : __( 'Tu agenda', 'deoia-subscriptions' );
 
 	ob_start();
 	?>
@@ -470,73 +479,52 @@ function deoia_subscriptions_portal_render_dashboard_real( array $dashboard ): s
 	<?php endif; ?>
 
 	<header class="deoia-account-portal__header">
-		<h2 class="deoia-account-portal__title"><?php echo esc_html( $title ); ?></h2>
+		<h2 class="deoia-account-portal__title"><?php echo esc_html__( 'Portal DEOIA', 'deoia-subscriptions' ); ?></h2>
 		<?php if ( $agenda_slug !== '' ) : ?>
 			<p class="deoia-account-portal__subtitle">
-				<code><?php echo esc_html( $agenda_slug ); ?></code>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: %s: agenda slug */
+						__( 'Agenda: %s', 'deoia-subscriptions' ),
+						$agenda_slug
+					)
+				);
+				?>
 			</p>
 		<?php endif; ?>
 	</header>
 
-	<section class="deoia-account-portal__grid" aria-label="<?php echo esc_attr__( 'Resumen de tu cuenta', 'deoia-subscriptions' ); ?>">
+	<section class="deoia-account-portal__grid deoia-account-portal__grid--dashboard" aria-label="<?php echo esc_attr__( 'Tu panel', 'deoia-subscriptions' ); ?>">
 		<article class="deoia-account-portal__card deoia-account-portal__card--primary">
 			<h3 class="deoia-account-portal__card-title"><?php echo esc_html__( 'Agenda', 'deoia-subscriptions' ); ?></h3>
-			<p class="deoia-account-portal__value"><?php echo esc_html( $title ); ?></p>
+			<p class="deoia-account-portal__lead"><?php echo esc_html( $agenda_lead ); ?></p>
 			<p class="deoia-account-portal__actions">
 				<?php
-				$open_agenda_href = $open_agenda_url !== ''
-					? esc_url( $open_agenda_url, array( 'https', 'http' ) )
+				$agenda_app_href = $agenda_app_url !== ''
+					? esc_url( $agenda_app_url, array( 'https', 'http' ) )
 					: '';
 				?>
-				<?php if ( $open_agenda_href !== '' ) : ?>
-					<a class="deoia-account-portal__btn deoia-account-portal__btn--primary" href="<?php echo esc_url( $open_agenda_href ); ?>" target="_blank" rel="noopener noreferrer">
-						<?php echo esc_html__( 'Abrir agenda', 'deoia-subscriptions' ); ?>
+				<?php if ( $agenda_app_href !== '' ) : ?>
+					<a class="deoia-account-portal__btn deoia-account-portal__btn--primary" href="<?php echo esc_url( $agenda_app_href ); ?>" target="_blank" rel="noopener noreferrer">
+						<?php echo esc_html__( 'Ir a mi agenda', 'deoia-subscriptions' ); ?>
 					</a>
 				<?php else : ?>
 					<span class="deoia-account-portal__btn deoia-account-portal__btn--disabled" aria-disabled="true">
-						<?php echo esc_html__( 'Abrir agenda (no disponible)', 'deoia-subscriptions' ); ?>
-					</span>
-				<?php endif; ?>
-				<?php
-				$wp_login_href = $wp_login_url !== ''
-					? esc_url( $wp_login_url, array( 'https', 'http' ) )
-					: '';
-				?>
-				<?php if ( $wp_login_href !== '' ) : ?>
-					<a class="deoia-account-portal__btn deoia-account-portal__btn--secondary" href="<?php echo esc_url( $wp_login_href ); ?>" target="_blank" rel="noopener noreferrer">
-						<?php echo esc_html__( 'Entrar a WordPress', 'deoia-subscriptions' ); ?>
-					</a>
-				<?php else : ?>
-					<span class="deoia-account-portal__btn deoia-account-portal__btn--disabled" aria-disabled="true">
-						<?php echo esc_html__( 'WordPress (no disponible)', 'deoia-subscriptions' ); ?>
+						<?php echo esc_html__( 'Ir a mi agenda (no disponible)', 'deoia-subscriptions' ); ?>
 					</span>
 				<?php endif; ?>
 			</p>
 		</article>
 
-		<article class="deoia-account-portal__card">
-			<h3 class="deoia-account-portal__card-title"><?php echo esc_html__( 'Instalación', 'deoia-subscriptions' ); ?></h3>
-			<?php if ( $inst_status !== '' ) : ?>
-				<p>
-					<span class="deoia-account-portal__badge <?php echo esc_attr( deoia_subscriptions_portal_status_modifier( $inst_status ) ); ?>">
-						<?php echo esc_html( $inst_status ); ?>
-					</span>
-				</p>
-			<?php endif; ?>
-			<?php if ( $inst_type !== '' ) : ?>
-				<p class="deoia-account-portal__label"><?php echo esc_html__( 'Tipo', 'deoia-subscriptions' ); ?></p>
-				<p class="deoia-account-portal__value"><?php echo esc_html( $inst_type ); ?></p>
-			<?php endif; ?>
-		</article>
-
-		<article class="deoia-account-portal__card">
+		<article class="deoia-account-portal__card deoia-account-portal__card--subscription">
 			<h3 class="deoia-account-portal__card-title"><?php echo esc_html__( 'Suscripción', 'deoia-subscriptions' ); ?></h3>
 			<?php if ( $plan_tier !== '' ) : ?>
 				<p class="deoia-account-portal__label"><?php echo esc_html__( 'Plan', 'deoia-subscriptions' ); ?></p>
 				<p class="deoia-account-portal__value"><?php echo esc_html( $plan_tier ); ?></p>
 			<?php endif; ?>
 			<?php if ( $billing_badge !== null ) : ?>
-				<p class="deoia-account-portal__label"><?php echo esc_html__( 'Facturación', 'deoia-subscriptions' ); ?></p>
+				<p class="deoia-account-portal__label"><?php echo esc_html__( 'Estado', 'deoia-subscriptions' ); ?></p>
 				<p>
 					<span class="deoia-account-portal__badge <?php echo esc_attr( $billing_badge['modifier'] ); ?>">
 						<?php echo esc_html( $billing_badge['label'] ); ?>
@@ -554,25 +542,6 @@ function deoia_subscriptions_portal_render_dashboard_real( array $dashboard ): s
 			}
 			?>
 		</article>
-
-		<article class="deoia-account-portal__card">
-			<h3 class="deoia-account-portal__card-title"><?php echo esc_html__( 'Cuenta', 'deoia-subscriptions' ); ?></h3>
-			<?php if ( $email !== '' ) : ?>
-				<p class="deoia-account-portal__label"><?php echo esc_html__( 'Correo', 'deoia-subscriptions' ); ?></p>
-				<p class="deoia-account-portal__value"><?php echo esc_html( $email ); ?></p>
-			<?php endif; ?>
-		</article>
-
-		<?php if ( $messages !== array() ) : ?>
-			<article class="deoia-account-portal__card deoia-account-portal__card--wide">
-				<h3 class="deoia-account-portal__card-title"><?php echo esc_html__( 'Avisos', 'deoia-subscriptions' ); ?></h3>
-				<ul class="deoia-account-portal__messages">
-					<?php foreach ( $messages as $message ) : ?>
-						<li><?php echo esc_html( $message ); ?></li>
-					<?php endforeach; ?>
-				</ul>
-			</article>
-		<?php endif; ?>
 	</section>
 	<?php
 	return (string) ob_get_clean();
