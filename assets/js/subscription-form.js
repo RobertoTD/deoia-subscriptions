@@ -62,6 +62,10 @@
 		}
 
 		var submitBtn = document.getElementById('deoia-subscription-submit');
+		var plansEl = document.getElementById('deoia-subscription-plans');
+		var freemiumCta = document.getElementById('deoia-plan-freemium-cta');
+		var proCta = document.getElementById('deoia-plan-pro-cta');
+		var plansBackBtn = document.getElementById('deoia-plans-back');
 		var errorsEl = document.getElementById('deoia-subscription-errors');
 		var agendaInput = document.getElementById('deoia-agenda-name');
 		var slugStatus = document.getElementById('deoia-slug-status');
@@ -365,42 +369,56 @@
 			});
 		}
 
-		form.addEventListener('submit', function (e) {
-			e.preventDefault();
-			showError(errorsEl, '');
-
+		function getFormPayload() {
 			var agendaName = (form.querySelector('[name="agenda_name"]') || {}).value || '';
 			var email = (form.querySelector('[name="email"]') || {}).value || '';
 			var ownerName = (form.querySelector('[name="owner_name"]') || {}).value || '';
 			var desiredSlug = (hiddenSlugInput || {}).value || '';
-			var slugSubmitError = validateSlugBeforeSubmit();
 
-			if (slugSubmitError) {
-				showError(errorsEl, slugSubmitError);
-				if (slugInput && (lastAvailabilityState === 'taken' || lastAvailabilityState === 'invalid' || lastAvailabilityState === 'error')) {
-					manualMode = true;
-					setSlugFieldVisible(true);
-					slugInput.focus();
-				}
-				return;
+			return {
+				agenda_name: agendaName.trim(),
+				email: email.trim(),
+				owner_name: ownerName.trim(),
+				desired_slug: desiredSlug.trim()
+			};
+		}
+
+		function setPlanSelectionVisible(visible) {
+			form.classList.toggle('is-selecting-plan', Boolean(visible));
+			if (plansEl) {
+				plansEl.hidden = !visible;
 			}
-
 			if (submitBtn) {
-				submitBtn.disabled = true;
+				submitBtn.hidden = Boolean(visible);
 			}
+		}
 
-			fetch(cfg.restUrl, {
+		function setPlanButtonsDisabled(disabled) {
+			if (freemiumCta) {
+				freemiumCta.disabled = disabled;
+			}
+			if (proCta) {
+				proCta.disabled = disabled;
+			}
+			if (plansBackBtn) {
+				plansBackBtn.disabled = disabled;
+			}
+		}
+
+		// Shared request runner for both plan flows. `onSuccess` decides where to
+		// redirect based on the backend response (checkout_url for PRO,
+		// redirect_url for Freemium).
+		function startPlan(url, onSuccess) {
+			showError(errorsEl, '');
+			setPlanButtonsDisabled(true);
+
+			fetch(url, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					'X-WP-Nonce': cfg.nonce || ''
 				},
-				body: JSON.stringify({
-					agenda_name: agendaName.trim(),
-					email: email.trim(),
-					owner_name: ownerName.trim(),
-					desired_slug: desiredSlug.trim()
-				}),
+				body: JSON.stringify(getFormPayload()),
 				credentials: 'same-origin'
 			})
 				.then(function (res) {
@@ -409,11 +427,11 @@
 					});
 				})
 				.then(function (result) {
-					if (result.ok && result.data && result.data.checkout_url) {
-						window.location.href = result.data.checkout_url;
+					if (result.ok && onSuccess(result.data)) {
 						return;
 					}
 					if (handleSlugStartError(result.data, result.status)) {
+						setPlanSelectionVisible(false);
 						return;
 					}
 					var msg =
@@ -426,10 +444,70 @@
 					showError(errorsEl, 'Error de red. Comprueba tu conexión.');
 				})
 				.finally(function () {
-					if (submitBtn) {
-						submitBtn.disabled = false;
-					}
+					setPlanButtonsDisabled(false);
 				});
+		}
+
+		// Step 1: validate the form, then reveal the inline plan selection.
+		// No network call and no Stripe redirect happens here.
+		form.addEventListener('submit', function (e) {
+			e.preventDefault();
+			showError(errorsEl, '');
+
+			var slugSubmitError = validateSlugBeforeSubmit();
+
+			if (slugSubmitError) {
+				showError(errorsEl, slugSubmitError);
+				if (slugInput && (lastAvailabilityState === 'taken' || lastAvailabilityState === 'invalid' || lastAvailabilityState === 'error')) {
+					manualMode = true;
+					setSlugFieldVisible(true);
+					slugInput.focus();
+				}
+				return;
+			}
+
+			setPlanSelectionVisible(true);
 		});
+
+		if (plansBackBtn) {
+			plansBackBtn.addEventListener('click', function () {
+				showError(errorsEl, '');
+				setPlanSelectionVisible(false);
+			});
+		}
+
+		// PRO: unchanged contract — expects checkout_url and redirects to Stripe.
+		if (proCta) {
+			proCta.addEventListener('click', function () {
+				startPlan(cfg.restUrl, function (data) {
+					if (data && data.checkout_url) {
+						window.location.href = data.checkout_url;
+						return true;
+					}
+					return false;
+				});
+			});
+		}
+
+		// Freemium: new flow — provisions without Stripe and redirects to the
+		// thank-you page once the request is accepted.
+		if (freemiumCta) {
+			freemiumCta.addEventListener('click', function () {
+				if (!cfg.freemiumUrl) {
+					showError(errorsEl, 'El plan Freemium no está disponible ahora.');
+					return;
+				}
+				startPlan(cfg.freemiumUrl, function (data) {
+					if (data && (data.status === 'provisioning_started' || data.ok)) {
+						var target = data.redirect_url || cfg.freemiumRedirectUrl;
+						if (target) {
+							window.location.href = target;
+							return true;
+						}
+					}
+					return false;
+				});
+			});
+		}
 	});
 })();

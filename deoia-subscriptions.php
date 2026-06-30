@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.5.7' );
+define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.6.0' );
 define( 'DEOIA_SUBSCRIPTIONS_FILE', __FILE__ );
 define( 'DEOIA_SUBSCRIPTIONS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -62,7 +62,9 @@ function deoia_subscriptions_register_assets(): void {
 		'deoiaSubscriptions',
 		array(
 			'restUrl'             => esc_url_raw( rest_url( 'deoia/v1/start-subscription' ) ),
+			'freemiumUrl'         => esc_url_raw( rest_url( 'deoia/v1/start-freemium-subscription' ) ),
 			'slugAvailabilityUrl' => esc_url_raw( rest_url( 'deoia/v1/slug-availability' ) ),
+			'freemiumRedirectUrl' => esc_url_raw( deoia_subscriptions_resolve_thank_you_page_url() ),
 			'publicDomain'        => defined( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) && is_string( constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) ) && constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) !== ''
 				? sanitize_text_field( (string) constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) )
 				: 'deoia.com',
@@ -103,10 +105,8 @@ function deoia_subscriptions_render_form_shortcode(): string {
 					<h2 id="deoia-subscription-portal-title" class="deoia-subscription-portal__title"><?php echo esc_html__( 'DEOIA Citas', 'deoia-subscriptions' ); ?></h2>
 				</div>
 				<p class="deoia-subscription-portal__headline"><?php echo esc_html__( 'Activa tu agenda profesional en minutos', 'deoia-subscriptions' ); ?></p>
-				<p class="deoia-subscription-portal__description"><?php echo esc_html__( 'Crea tu agenda PRO con instalación lista para usar, acceso tipo app y funciones premium para gestionar tus citas.', 'deoia-subscriptions' ); ?></p>
+				<p class="deoia-subscription-portal__description"><?php echo esc_html__( 'Crea tu agenda profesional con instalación lista para usar, acceso tipo app y funciones premium para gestionar tus citas desde el plan freemium sin costo para ti.', 'deoia-subscriptions' ); ?></p>
 			</header>
-
-			<p class="deoia-subscription-portal__promo"><?php echo esc_html__( 'Promoción Junio: $100 MXN al mes congelado', 'deoia-subscriptions' ); ?></p>
 
 			<div class="deoia-subscription-portal__card">
 				<form class="deoia-subscription-form" id="deoia-subscription-form" novalidate>
@@ -135,9 +135,33 @@ function deoia_subscriptions_render_form_shortcode(): string {
 				</p>
 				<p class="deoia-subscription-form__errors" id="deoia-subscription-errors" hidden></p>
 				<p class="deoia-subscription-form__actions">
-					<button type="submit" class="deoia-subscription-form__submit" id="deoia-subscription-submit"><?php echo esc_html__( 'Continuar al pago', 'deoia-subscriptions' ); ?></button>
+					<button type="submit" class="deoia-subscription-form__submit" id="deoia-subscription-submit"><?php echo esc_html__( 'Crear mi agenda', 'deoia-subscriptions' ); ?></button>
 				</p>
-				<p class="deoia-subscription-form__trust"><?php echo esc_html__( 'Pago seguro. Después del pago recibirás el acceso a tu agenda.', 'deoia-subscriptions' ); ?></p>
+				<p class="deoia-subscription-form__trust"><?php echo esc_html__( 'Después de elegir tu suscripción recibirás el acceso a tu agenda.', 'deoia-subscriptions' ); ?></p>
+
+				<div class="deoia-subscription-plans" id="deoia-subscription-plans" hidden>
+					<p class="deoia-subscription-plans__heading"><?php echo esc_html__( 'Elige tu suscripción', 'deoia-subscriptions' ); ?></p>
+
+					<div class="deoia-subscription-plan deoia-subscription-plan--freemium is-selected" id="deoia-plan-freemium">
+						<div class="deoia-subscription-plan__head">
+							<span class="deoia-subscription-plan__name"><?php echo esc_html__( 'Freemium', 'deoia-subscriptions' ); ?></span>
+							<span class="deoia-subscription-plan__price"><?php echo esc_html__( '$0 / mes', 'deoia-subscriptions' ); ?></span>
+						</div>
+						<p class="deoia-subscription-plan__desc"><?php echo esc_html__( 'Tu agenda lista para usar, sin costo. Empieza hoy mismo.', 'deoia-subscriptions' ); ?></p>
+						<button type="button" class="deoia-subscription-plan__cta" id="deoia-plan-freemium-cta"><?php echo esc_html__( 'Elegir Freemium', 'deoia-subscriptions' ); ?></button>
+					</div>
+
+					<div class="deoia-subscription-plan deoia-subscription-plan--pro" id="deoia-plan-pro">
+						<div class="deoia-subscription-plan__head">
+							<span class="deoia-subscription-plan__name"><?php echo esc_html__( 'PRO', 'deoia-subscriptions' ); ?></span>
+							<span class="deoia-subscription-plan__price"><?php echo esc_html__( '$100 MXN / mes', 'deoia-subscriptions' ); ?></span>
+						</div>
+						<p class="deoia-subscription-plan__desc"><?php echo esc_html__( 'Funciones premium completas y soporte prioritario para tu agenda.', 'deoia-subscriptions' ); ?></p>
+						<button type="button" class="deoia-subscription-plan__cta deoia-subscription-plan__cta--pro" id="deoia-plan-pro-cta"><?php echo esc_html__( 'Continuar con PRO', 'deoia-subscriptions' ); ?></button>
+					</div>
+
+					<button type="button" class="deoia-subscription-plans__back" id="deoia-plans-back"><?php echo esc_html__( 'Editar mis datos', 'deoia-subscriptions' ); ?></button>
+				</div>
 				</form>
 			</div>
 
@@ -200,6 +224,73 @@ function deoia_subscriptions_backend_slug_availability_url(): ?string {
 	}
 
 	return substr( $normalized_start_url, 0, - strlen( '/subscriptions/start' ) ) . '/subscriptions/slug-availability';
+}
+
+/**
+ * Resuelve la URL del backend Node para POST /subscriptions/start-freemium.
+ *
+ * Honra un override explícito y, si no existe, la deriva de la URL de start
+ * reemplazando el sufijo /subscriptions/start por /subscriptions/start-freemium.
+ */
+function deoia_subscriptions_backend_freemium_start_url(): ?string {
+	if (
+		defined( 'DEOIA_SUBSCRIPTIONS_BACKEND_FREEMIUM_START_URL' )
+		&& is_string( constant( 'DEOIA_SUBSCRIPTIONS_BACKEND_FREEMIUM_START_URL' ) )
+		&& constant( 'DEOIA_SUBSCRIPTIONS_BACKEND_FREEMIUM_START_URL' ) !== ''
+	) {
+		return (string) constant( 'DEOIA_SUBSCRIPTIONS_BACKEND_FREEMIUM_START_URL' );
+	}
+
+	if ( ! deoia_subscriptions_backend_start_url_is_configured() ) {
+		return null;
+	}
+
+	$start_url            = (string) constant( 'DEOIA_SUBSCRIPTIONS_BACKEND_START_URL' );
+	$normalized_start_url = rtrim( $start_url, '/' );
+	if ( substr( $normalized_start_url, - strlen( '/subscriptions/start' ) ) !== '/subscriptions/start' ) {
+		return null;
+	}
+
+	return substr( $normalized_start_url, 0, - strlen( '/subscriptions/start' ) ) . '/subscriptions/start-freemium';
+}
+
+/**
+ * Comprueba que DEOIA_STRIPE_SUCCESS_URL esté definida (misma fuente que el return URL de PRO).
+ */
+function deoia_subscriptions_stripe_success_url_is_configured(): bool {
+	return defined( 'DEOIA_STRIPE_SUCCESS_URL' )
+		&& is_string( constant( 'DEOIA_STRIPE_SUCCESS_URL' ) )
+		&& constant( 'DEOIA_STRIPE_SUCCESS_URL' ) !== '';
+}
+
+/**
+ * URL canónica de la página de gracias para redirects post-suscripción (Freemium).
+ *
+ * Prioridad:
+ * 1. Base de DEOIA_STRIPE_SUCCESS_URL (sin query), alineada con el return URL de Stripe/PRO.
+ * 2. get_permalink() de la página con slug "gracias" (respeta index.php y permalinks).
+ * 3. home_url() sobre el slug como último recurso.
+ *
+ * @return string
+ */
+function deoia_subscriptions_resolve_thank_you_page_url(): string {
+	if ( deoia_subscriptions_stripe_success_url_is_configured() ) {
+		$success_url = (string) constant( 'DEOIA_STRIPE_SUCCESS_URL' );
+		$base        = strtok( $success_url, '?' );
+		if ( is_string( $base ) && $base !== '' ) {
+			return trailingslashit( $base );
+		}
+	}
+
+	$page = get_page_by_path( 'gracias', OBJECT, 'page' );
+	if ( $page instanceof WP_Post ) {
+		$permalink = get_permalink( $page );
+		if ( is_string( $permalink ) && $permalink !== '' ) {
+			return $permalink;
+		}
+	}
+
+	return trailingslashit( home_url( '/gracias/' ) );
 }
 
 /**
@@ -357,6 +448,72 @@ function deoia_subscriptions_rest_start_subscription( WP_REST_Request $request )
 		),
 		200
 	);
+}
+
+/**
+ * POST /wp-json/deoia/v1/start-freemium-subscription
+ *
+ * Proxy same-origin hacia el backend Node POST /subscriptions/start-freemium.
+ * No pasa por Stripe: el backend reserva el slug, crea la cuenta/suscripción
+ * Freemium y encola el provisioning.
+ *
+ * @param WP_REST_Request $request Solicitud.
+ * @return WP_REST_Response
+ */
+function deoia_subscriptions_rest_start_freemium_subscription( WP_REST_Request $request ): WP_REST_Response {
+	$agenda_name  = sanitize_text_field( trim( (string) $request->get_param( 'agenda_name' ) ) );
+	$email        = sanitize_email( trim( (string) $request->get_param( 'email' ) ) );
+	$owner_name   = sanitize_text_field( trim( (string) $request->get_param( 'owner_name' ) ) );
+	$desired_slug = sanitize_text_field( trim( (string) $request->get_param( 'desired_slug' ) ) );
+
+	if ( $agenda_name === '' || $owner_name === '' ) {
+		return deoia_subscriptions_rest_error( __( 'Todos los campos son obligatorios.', 'deoia-subscriptions' ), 400 );
+	}
+
+	if ( $email === '' || ! is_email( $email ) ) {
+		return deoia_subscriptions_rest_error( __( 'Correo electrónico no válido.', 'deoia-subscriptions' ), 400 );
+	}
+
+	$backend_url = deoia_subscriptions_backend_freemium_start_url();
+	if ( $backend_url === null ) {
+		return deoia_subscriptions_rest_error( 'Backend de suscripciones no configurado.', 500 );
+	}
+
+	$response = wp_remote_post(
+		$backend_url,
+		array(
+			'timeout' => 30,
+			'headers' => array(
+				'Content-Type' => 'application/json',
+			),
+			'body'    => wp_json_encode(
+				array(
+					'agenda_name'  => $agenda_name,
+					'owner_name'   => $owner_name,
+					'email'        => $email,
+					'desired_slug' => $desired_slug,
+				)
+			),
+		)
+	);
+
+	if ( is_wp_error( $response ) ) {
+		return deoia_subscriptions_rest_error( 'No se pudo crear tu agenda Freemium.', 500 );
+	}
+
+	$code = (int) wp_remote_retrieve_response_code( $response );
+	$raw  = (string) wp_remote_retrieve_body( $response );
+	$data = json_decode( $raw, true );
+
+	if ( ! is_array( $data ) ) {
+		return deoia_subscriptions_rest_error( 'No se pudo crear tu agenda Freemium.', 500 );
+	}
+
+	if ( $code < 200 || $code >= 300 ) {
+		return new WP_REST_Response( $data, $code );
+	}
+
+	return new WP_REST_Response( $data, 200 );
 }
 
 /**
@@ -551,6 +708,38 @@ function deoia_subscriptions_register_rest_routes(): void {
 					'sanitize_callback' => 'sanitize_email',
 				),
 				'owner_name'  => array(
+					'type'              => 'string',
+					'required'          => false,
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+				'desired_slug' => array(
+					'type'              => 'string',
+					'required'          => false,
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+			),
+		)
+	);
+
+	register_rest_route(
+		'deoia/v1',
+		'/start-freemium-subscription',
+		array(
+			'methods'             => 'POST',
+			'callback'            => 'deoia_subscriptions_rest_start_freemium_subscription',
+			'permission_callback' => '__return_true',
+			'args'                => array(
+				'agenda_name'  => array(
+					'type'              => 'string',
+					'required'          => false,
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+				'email'        => array(
+					'type'              => 'string',
+					'required'          => false,
+					'sanitize_callback' => 'sanitize_email',
+				),
+				'owner_name'   => array(
 					'type'              => 'string',
 					'required'          => false,
 					'sanitize_callback' => 'sanitize_text_field',

@@ -399,6 +399,144 @@
 	color: var(--deoia-sub-muted);
 }
 
+/* ── Inline plan selection (Freemium / PRO) ───────────────────────────────── */
+
+/* While choosing a plan, collapse the captured-data fields without losing them. */
+.deoia-subscription-form.is-selecting-plan .deoia-subscription-form__field,
+.deoia-subscription-form.is-selecting-plan .deoia-subscription-form__slug-status,
+.deoia-subscription-form.is-selecting-plan .deoia-subscription-form__slug-field,
+.deoia-subscription-form.is-selecting-plan .deoia-subscription-form__slug-suggestions,
+.deoia-subscription-form.is-selecting-plan .deoia-subscription-form__trust {
+	display: none !important;
+}
+
+.deoia-subscription-plans {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin: 0;
+}
+
+.deoia-wysiwyg .deoia-subscription-plans__heading,
+.deoia-subscription-plans__heading {
+	margin: 0;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	line-height: 1.35;
+	color: #374151;
+	text-align: center;
+}
+
+.deoia-subscription-plan {
+	margin: 0;
+	padding: 0.875rem 0.875rem 1rem;
+	border: 1px solid var(--deoia-sub-input-border);
+	border-radius: var(--deoia-sub-input-radius);
+	background: #f9fafb;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.deoia-subscription-plan.is-selected {
+	border-color: var(--deoia-sub-accent);
+	background: var(--deoia-sub-accent-soft);
+	box-shadow: 0 0 0 3px var(--deoia-sub-focus-ring);
+}
+
+.deoia-subscription-plan__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.35rem;
+}
+
+.deoia-subscription-plan__name {
+	font-size: 0.9375rem;
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	color: var(--deoia-sub-text);
+}
+
+.deoia-subscription-plan__price {
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--deoia-sub-accent-hover);
+	white-space: nowrap;
+}
+
+.deoia-wysiwyg .deoia-subscription-plan__desc,
+.deoia-subscription-plan__desc {
+	margin: 0 0 0.75rem;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: var(--deoia-sub-muted);
+}
+
+.deoia-subscription-plan__cta {
+	display: block;
+	width: 100%;
+	min-height: 2.5rem;
+	margin: 0;
+	padding: 0.5rem 1rem;
+	border: 0;
+	border-radius: var(--deoia-sub-input-radius);
+	background: var(--deoia-sub-accent);
+	color: #fff;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	line-height: 1.3;
+	cursor: pointer;
+	transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.deoia-subscription-plan__cta:hover,
+.deoia-subscription-plan__cta:focus {
+	background: var(--deoia-sub-accent-hover);
+	box-shadow: 0 4px 12px rgba(139, 92, 246, 0.28);
+	outline: none;
+}
+
+.deoia-subscription-plan__cta--pro {
+	background: #111827;
+}
+
+.deoia-subscription-plan__cta--pro:hover,
+.deoia-subscription-plan__cta--pro:focus {
+	background: #1f2937;
+	box-shadow: 0 4px 12px rgba(17, 24, 39, 0.24);
+}
+
+.deoia-subscription-plan__cta:disabled {
+	opacity: 0.65;
+	cursor: not-allowed;
+	box-shadow: none;
+}
+
+.deoia-subscription-plans__back {
+	align-self: center;
+	margin: 0;
+	padding: 0.35rem 0.5rem;
+	border: 0;
+	background: transparent;
+	color: var(--deoia-sub-muted);
+	font-size: 0.8125rem;
+	font-weight: 500;
+	line-height: 1.3;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.deoia-subscription-plans__back:hover,
+.deoia-subscription-plans__back:focus {
+	color: var(--deoia-sub-text);
+	outline: none;
+}
+
+.deoia-subscription-plans__back:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
 @media (min-width: 480px) {
 	.deoia-subscription-portal {
 		padding-bottom: 2rem;
