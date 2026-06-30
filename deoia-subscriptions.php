@@ -15,10 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.6.0' );
+define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.6.1' );
 define( 'DEOIA_SUBSCRIPTIONS_FILE', __FILE__ );
 define( 'DEOIA_SUBSCRIPTIONS_DIR', plugin_dir_path( __FILE__ ) );
 
+require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/freemium-abuse-guards.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/account-portal-shortcode.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-access-verify.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-access-request.php';
@@ -132,6 +133,17 @@ function deoia_subscriptions_render_form_shortcode(): string {
 				<p class="deoia-subscription-form__field">
 					<label for="deoia-owner-name"><?php echo esc_html__( 'Tu nombre', 'deoia-subscriptions' ); ?></label>
 					<input type="text" id="deoia-owner-name" name="owner_name" required autocomplete="name">
+				</p>
+				<p class="deoia-subscription-form__hp" aria-hidden="true">
+					<label for="deoia-website"><?php echo esc_html__( 'Website', 'deoia-subscriptions' ); ?></label>
+					<input
+						type="text"
+						id="deoia-website"
+						name="website"
+						value=""
+						tabindex="-1"
+						autocomplete="off"
+					>
 				</p>
 				<p class="deoia-subscription-form__errors" id="deoia-subscription-errors" hidden></p>
 				<p class="deoia-subscription-form__actions">
@@ -461,6 +473,10 @@ function deoia_subscriptions_rest_start_subscription( WP_REST_Request $request )
  * @return WP_REST_Response
  */
 function deoia_subscriptions_rest_start_freemium_subscription( WP_REST_Request $request ): WP_REST_Response {
+	if ( deoia_subscriptions_freemium_honeypot_is_triggered( $request ) ) {
+		return deoia_subscriptions_freemium_fake_success_response();
+	}
+
 	$agenda_name  = sanitize_text_field( trim( (string) $request->get_param( 'agenda_name' ) ) );
 	$email        = sanitize_email( trim( (string) $request->get_param( 'email' ) ) );
 	$owner_name   = sanitize_text_field( trim( (string) $request->get_param( 'owner_name' ) ) );
@@ -472,6 +488,14 @@ function deoia_subscriptions_rest_start_freemium_subscription( WP_REST_Request $
 
 	if ( $email === '' || ! is_email( $email ) ) {
 		return deoia_subscriptions_rest_error( __( 'Correo electrónico no válido.', 'deoia-subscriptions' ), 400 );
+	}
+
+	$client_ip = deoia_subscriptions_get_client_ip();
+	if ( deoia_subscriptions_freemium_rl_is_limited( $client_ip, $email ) ) {
+		return deoia_subscriptions_rest_error(
+			deoia_subscriptions_freemium_rl_rate_limit_message(),
+			429
+		);
 	}
 
 	$backend_url = deoia_subscriptions_backend_freemium_start_url();
@@ -512,6 +536,8 @@ function deoia_subscriptions_rest_start_freemium_subscription( WP_REST_Request $
 	if ( $code < 200 || $code >= 300 ) {
 		return new WP_REST_Response( $data, $code );
 	}
+
+	deoia_subscriptions_freemium_rl_record_success( $client_ip, $email );
 
 	return new WP_REST_Response( $data, 200 );
 }
@@ -745,6 +771,11 @@ function deoia_subscriptions_register_rest_routes(): void {
 					'sanitize_callback' => 'sanitize_text_field',
 				),
 				'desired_slug' => array(
+					'type'              => 'string',
+					'required'          => false,
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+				'website'      => array(
 					'type'              => 'string',
 					'required'          => false,
 					'sanitize_callback' => 'sanitize_text_field',

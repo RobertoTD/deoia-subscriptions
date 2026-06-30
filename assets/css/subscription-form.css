@@ -399,10 +399,22 @@
 	color: var(--deoia-sub-muted);
 }
 
+/* Honeypot: off-screen trap for bots (Freemium anti-abuse). */
+.deoia-subscription-form__hp {
+	position: absolute;
+	left: -9999px;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	opacity: 0;
+	pointer-events: none;
+}
+
 /* ── Inline plan selection (Freemium / PRO) ───────────────────────────────── */
 
 /* While choosing a plan, collapse the captured-data fields without losing them. */
 .deoia-subscription-form.is-selecting-plan .deoia-subscription-form__field,
+.deoia-subscription-form.is-selecting-plan .deoia-subscription-form__hp,
 .deoia-subscription-form.is-selecting-plan .deoia-subscription-form__slug-status,
 .deoia-subscription-form.is-selecting-plan .deoia-subscription-form__slug-field,
 .deoia-subscription-form.is-selecting-plan .deoia-subscription-form__slug-suggestions,

@@ -383,6 +383,13 @@
 			};
 		}
 
+		function getFreemiumPayload() {
+			var payload = getFormPayload();
+			var website = (form.querySelector('[name="website"]') || {}).value || '';
+			payload.website = website.trim();
+			return payload;
+		}
+
 		function setPlanSelectionVisible(visible) {
 			form.classList.toggle('is-selecting-plan', Boolean(visible));
 			if (plansEl) {
@@ -408,9 +415,11 @@
 		// Shared request runner for both plan flows. `onSuccess` decides where to
 		// redirect based on the backend response (checkout_url for PRO,
 		// redirect_url for Freemium).
-		function startPlan(url, onSuccess) {
+		function startPlan(url, onSuccess, getPayload) {
 			showError(errorsEl, '');
 			setPlanButtonsDisabled(true);
+
+			var payload = typeof getPayload === 'function' ? getPayload() : getFormPayload();
 
 			fetch(url, {
 				method: 'POST',
@@ -418,7 +427,7 @@
 					'Content-Type': 'application/json',
 					'X-WP-Nonce': cfg.nonce || ''
 				},
-				body: JSON.stringify(getFormPayload()),
+				body: JSON.stringify(payload),
 				credentials: 'same-origin'
 			})
 				.then(function (res) {
@@ -506,7 +515,7 @@
 						}
 					}
 					return false;
-				});
+				}, getFreemiumPayload);
 			});
 		}
 	});
