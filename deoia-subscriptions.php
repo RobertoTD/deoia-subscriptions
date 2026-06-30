@@ -106,7 +106,7 @@ function deoia_subscriptions_render_form_shortcode(): string {
 					<h2 id="deoia-subscription-portal-title" class="deoia-subscription-portal__title"><?php echo esc_html__( 'DEOIA Citas', 'deoia-subscriptions' ); ?></h2>
 				</div>
 				<p class="deoia-subscription-portal__headline"><?php echo esc_html__( 'Activa tu agenda profesional en minutos', 'deoia-subscriptions' ); ?></p>
-				<p class="deoia-subscription-portal__description"><?php echo esc_html__( 'Crea tu agenda profesional con instalación lista para usar, acceso tipo app y funciones premium para gestionar tus citas desde el plan freemium sin costo para ti.', 'deoia-subscriptions' ); ?></p>
+				<p class="deoia-subscription-portal__description"><?php echo esc_html__( 'Crea tu agenda profesional con instalación lista para usar, acceso tipo app y herramientas para gestionar tus citas desde el primer día.', 'deoia-subscriptions' ); ?></p>
 			</header>
 
 			<div class="deoia-subscription-portal__card">
@@ -153,13 +153,19 @@ function deoia_subscriptions_render_form_shortcode(): string {
 
 				<div class="deoia-subscription-plans" id="deoia-subscription-plans" hidden>
 					<p class="deoia-subscription-plans__heading"><?php echo esc_html__( 'Elige tu suscripción', 'deoia-subscriptions' ); ?></p>
+					<p class="deoia-subscription-plans__shared"><?php echo esc_html__( 'Ambos planes incluyen agenda online, citas, tareas y acceso tipo app instalable.', 'deoia-subscriptions' ); ?></p>
 
 					<div class="deoia-subscription-plan deoia-subscription-plan--freemium is-selected" id="deoia-plan-freemium">
 						<div class="deoia-subscription-plan__head">
 							<span class="deoia-subscription-plan__name"><?php echo esc_html__( 'Freemium', 'deoia-subscriptions' ); ?></span>
 							<span class="deoia-subscription-plan__price"><?php echo esc_html__( '$0 / mes', 'deoia-subscriptions' ); ?></span>
 						</div>
-						<p class="deoia-subscription-plan__desc"><?php echo esc_html__( 'Tu agenda lista para usar, sin costo. Empieza hoy mismo.', 'deoia-subscriptions' ); ?></p>
+						<p class="deoia-subscription-plan__desc"><?php echo esc_html__( 'Tu agenda profesional lista para usar, sin costo mensual.', 'deoia-subscriptions' ); ?></p>
+						<ul class="deoia-subscription-plan__limits" aria-label="<?php echo esc_attr__( 'Límites mensuales Freemium', 'deoia-subscriptions' ); ?>">
+							<li><?php echo esc_html__( '30 correos de confirmación y recordatorio al mes', 'deoia-subscriptions' ); ?></li>
+							<li><?php echo esc_html__( '30 solicitudes IA al mes', 'deoia-subscriptions' ); ?></li>
+							<li><?php echo esc_html__( '70 sincronizaciones con Google Calendar al mes', 'deoia-subscriptions' ); ?></li>
+						</ul>
 						<button type="button" class="deoia-subscription-plan__cta" id="deoia-plan-freemium-cta"><?php echo esc_html__( 'Elegir Freemium', 'deoia-subscriptions' ); ?></button>
 					</div>
 
@@ -168,7 +174,12 @@ function deoia_subscriptions_render_form_shortcode(): string {
 							<span class="deoia-subscription-plan__name"><?php echo esc_html__( 'PRO', 'deoia-subscriptions' ); ?></span>
 							<span class="deoia-subscription-plan__price"><?php echo esc_html__( '$100 MXN / mes', 'deoia-subscriptions' ); ?></span>
 						</div>
-						<p class="deoia-subscription-plan__desc"><?php echo esc_html__( 'Funciones premium completas y soporte prioritario para tu agenda.', 'deoia-subscriptions' ); ?></p>
+						<p class="deoia-subscription-plan__desc"><?php echo esc_html__( 'Más capacidad para automatizar tu agenda y crecer sin fricción.', 'deoia-subscriptions' ); ?></p>
+						<ul class="deoia-subscription-plan__limits" aria-label="<?php echo esc_attr__( 'Límites mensuales PRO', 'deoia-subscriptions' ); ?>">
+							<li><?php echo esc_html__( '300 correos de confirmación y recordatorio al mes', 'deoia-subscriptions' ); ?></li>
+							<li><?php echo esc_html__( '300 solicitudes IA al mes', 'deoia-subscriptions' ); ?></li>
+							<li><?php echo esc_html__( '700 sincronizaciones con Google Calendar al mes', 'deoia-subscriptions' ); ?></li>
+						</ul>
 						<button type="button" class="deoia-subscription-plan__cta deoia-subscription-plan__cta--pro" id="deoia-plan-pro-cta"><?php echo esc_html__( 'Continuar con PRO', 'deoia-subscriptions' ); ?></button>
 					</div>
 
@@ -179,8 +190,8 @@ function deoia_subscriptions_render_form_shortcode(): string {
 
 			<ul class="deoia-subscription-portal__features" aria-label="<?php echo esc_attr__( 'Incluye', 'deoia-subscriptions' ); ?>">
 				<li><?php echo esc_html__( 'Agenda lista para usar', 'deoia-subscriptions' ); ?></li>
-				<li><?php echo esc_html__( 'App instalable en tu celular', 'deoia-subscriptions' ); ?></li>
-				<li><?php echo esc_html__( 'Funciones PRO activas', 'deoia-subscriptions' ); ?></li>
+				<li><?php echo esc_html__( 'App instalable', 'deoia-subscriptions' ); ?></li>
+				<li><?php echo esc_html__( 'Citas y tareas incluidas', 'deoia-subscriptions' ); ?></li>
 			</ul>
 		</div>
 	</section>

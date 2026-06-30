@@ -439,6 +439,15 @@
 	text-align: center;
 }
 
+.deoia-wysiwyg .deoia-subscription-plans__shared,
+.deoia-subscription-plans__shared {
+	margin: 0.35rem 0 0;
+	font-size: 0.75rem;
+	line-height: 1.4;
+	color: var(--deoia-sub-muted);
+	text-align: center;
+}
+
 .deoia-subscription-plan {
 	margin: 0;
 	padding: 0.875rem 0.875rem 1rem;
@@ -478,10 +487,29 @@
 
 .deoia-wysiwyg .deoia-subscription-plan__desc,
 .deoia-subscription-plan__desc {
-	margin: 0 0 0.75rem;
-	font-size: 0.8125rem;
+	margin: 0 0 0.5rem;
+	font-size: 0.875rem;
 	line-height: 1.45;
 	color: var(--deoia-sub-muted);
+}
+
+.deoia-subscription-plan__limits {
+	margin: 0 0 0.75rem;
+	padding: 0 0 0 1rem;
+	list-style: disc;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	color: var(--deoia-sub-muted);
+}
+
+.deoia-wysiwyg .deoia-subscription-plan__limits li,
+.deoia-subscription-plan__limits li {
+	margin: 0;
+	padding: 0;
+}
+
+.deoia-subscription-plan__limits li + li {
+	margin-top: 0.2rem;
 }
 
 .deoia-subscription-plan__cta {
