@@ -316,6 +316,45 @@
 			return '';
 		}
 
+		function validateEmailBeforeSubmit() {
+			var emailInput = form.querySelector('[name="email"]');
+			var email = emailInput ? emailInput.value : '';
+
+			if (!email || String(email).trim() === '') {
+				return 'Ingresa tu correo electrónico.';
+			}
+
+			if (!window.DeoiaEmailTypoGuard || typeof window.DeoiaEmailTypoGuard.validateSubscriptionEmail !== 'function') {
+				return '';
+			}
+
+			var result = window.DeoiaEmailTypoGuard.validateSubscriptionEmail(email);
+			if (result && result.ok === false) {
+				return window.DeoiaEmailTypoGuard.buildUserMessage(result);
+			}
+
+			return '';
+		}
+
+		function handleEmailTypoError(data) {
+			if (!data || data.error !== 'email_typo_suspected') {
+				return false;
+			}
+
+			var message = data.message;
+			if ((!message || typeof message !== 'string') && window.DeoiaEmailTypoGuard) {
+				message = window.DeoiaEmailTypoGuard.buildUserMessage(data);
+			}
+
+			showError(errorsEl, message || 'Revisa tu correo electrónico antes de continuar.');
+			var emailInput = form.querySelector('[name="email"]');
+			if (emailInput) {
+				emailInput.focus();
+			}
+			setPlanSelectionVisible(false);
+			return true;
+		}
+
 		function handleSlugStartError(data, status) {
 			if (!data || (data.error !== 'slug_unavailable' && data.error !== 'invalid_slug')) {
 				return false;
@@ -419,6 +458,17 @@
 			showError(errorsEl, '');
 			setPlanButtonsDisabled(true);
 
+			var emailSubmitError = validateEmailBeforeSubmit();
+			if (emailSubmitError) {
+				showError(errorsEl, emailSubmitError);
+				var emailInput = form.querySelector('[name="email"]');
+				if (emailInput) {
+					emailInput.focus();
+				}
+				setPlanButtonsDisabled(false);
+				return;
+			}
+
 			var payload = typeof getPayload === 'function' ? getPayload() : getFormPayload();
 
 			fetch(url, {
@@ -441,6 +491,9 @@
 					}
 					if (handleSlugStartError(result.data, result.status)) {
 						setPlanSelectionVisible(false);
+						return;
+					}
+					if (handleEmailTypoError(result.data)) {
 						return;
 					}
 					var msg =
@@ -471,6 +524,16 @@
 					manualMode = true;
 					setSlugFieldVisible(true);
 					slugInput.focus();
+				}
+				return;
+			}
+
+			var emailSubmitError = validateEmailBeforeSubmit();
+			if (emailSubmitError) {
+				showError(errorsEl, emailSubmitError);
+				var emailInput = form.querySelector('[name="email"]');
+				if (emailInput) {
+					emailInput.focus();
 				}
 				return;
 			}

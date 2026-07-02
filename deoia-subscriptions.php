@@ -15,11 +15,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.6.1' );
+define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.6.2' );
 define( 'DEOIA_SUBSCRIPTIONS_FILE', __FILE__ );
 define( 'DEOIA_SUBSCRIPTIONS_DIR', plugin_dir_path( __FILE__ ) );
 
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/freemium-abuse-guards.php';
+require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/domain/email/email-typo-guard.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/account-portal-shortcode.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-access-verify.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-access-request.php';
@@ -51,9 +52,17 @@ function deoia_subscriptions_register_assets(): void {
 	);
 
 	wp_register_script(
+		'deoia-email-typo-guard',
+		plugins_url( 'assets/js/email-typo-guard.js', DEOIA_SUBSCRIPTIONS_FILE ),
+		array(),
+		DEOIA_SUBSCRIPTIONS_VERSION,
+		true
+	);
+
+	wp_register_script(
 		'deoia-subscription-form',
 		plugins_url( 'assets/js/subscription-form.js', DEOIA_SUBSCRIPTIONS_FILE ),
-		array(),
+		array( 'deoia-email-typo-guard' ),
 		DEOIA_SUBSCRIPTIONS_VERSION,
 		true
 	);
@@ -421,6 +430,11 @@ function deoia_subscriptions_rest_start_subscription( WP_REST_Request $request )
 		return deoia_subscriptions_rest_error( __( 'Correo electrónico no válido.', 'deoia-subscriptions' ), 400 );
 	}
 
+	$email_typo_result = deoia_subscriptions_validate_subscription_email( $email );
+	if ( empty( $email_typo_result['ok'] ) ) {
+		return deoia_subscriptions_rest_email_typo_error( $email_typo_result, 400 );
+	}
+
 	if ( ! deoia_subscriptions_backend_start_url_is_configured() ) {
 		return deoia_subscriptions_rest_error( 'Backend de suscripciones no configurado.', 500 );
 	}
@@ -499,6 +513,11 @@ function deoia_subscriptions_rest_start_freemium_subscription( WP_REST_Request $
 
 	if ( $email === '' || ! is_email( $email ) ) {
 		return deoia_subscriptions_rest_error( __( 'Correo electrónico no válido.', 'deoia-subscriptions' ), 400 );
+	}
+
+	$email_typo_result = deoia_subscriptions_validate_subscription_email( $email );
+	if ( empty( $email_typo_result['ok'] ) ) {
+		return deoia_subscriptions_rest_email_typo_error( $email_typo_result, 400 );
 	}
 
 	$client_ip = deoia_subscriptions_get_client_ip();

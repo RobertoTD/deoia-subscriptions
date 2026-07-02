@@ -1,0 +1,28 @@
+{
+  "common_providers": [
+    "gmail.com",
+    "googlemail.com",
+    "hotmail.com",
+    "outlook.com",
+    "live.com",
+    "hotmail.com.mx",
+    "outlook.es",
+    "yahoo.com",
+    "yahoo.com.mx",
+    "icloud.com",
+    "me.com"
+  ],
+  "typo_blocklist": {
+    "gmqil.com": "gmail.com",
+    "gamil.com": "gmail.com",
+    "gnail.com": "gmail.com",
+    "gmial.com": "gmail.com",
+    "gmai.com": "gmail.com",
+    "hotmial.com": "hotmail.com",
+    "hotmal.com": "hotmail.com",
+    "outlok.com": "outlook.com",
+    "outlook.con": "outlook.com",
+    "yahoo.con": "yahoo.com",
+    "iclud.com": "icloud.com"
+  }
+}
