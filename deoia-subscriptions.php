@@ -173,7 +173,7 @@ function deoia_subscriptions_render_form_shortcode(): string {
 						<ul class="deoia-subscription-plan__limits" aria-label="<?php echo esc_attr__( 'Límites mensuales Freemium', 'deoia-subscriptions' ); ?>">
 							<li><?php echo esc_html__( '30 correos de confirmación y recordatorio al mes', 'deoia-subscriptions' ); ?></li>
 							<li><?php echo esc_html__( '30 solicitudes IA al mes', 'deoia-subscriptions' ); ?></li>
-							<li><?php echo esc_html__( '70 sincronizaciones con Google Calendar al mes', 'deoia-subscriptions' ); ?></li>
+							<li><?php echo esc_html__( '70 sincronizaciones Calendar y notificaciones push al mes', 'deoia-subscriptions' ); ?></li>
 						</ul>
 						<button type="button" class="deoia-subscription-plan__cta" id="deoia-plan-freemium-cta"><?php echo esc_html__( 'Elegir Freemium', 'deoia-subscriptions' ); ?></button>
 					</div>
@@ -187,7 +187,7 @@ function deoia_subscriptions_render_form_shortcode(): string {
 						<ul class="deoia-subscription-plan__limits" aria-label="<?php echo esc_attr__( 'Límites mensuales PRO', 'deoia-subscriptions' ); ?>">
 							<li><?php echo esc_html__( '300 correos de confirmación y recordatorio al mes', 'deoia-subscriptions' ); ?></li>
 							<li><?php echo esc_html__( '300 solicitudes IA al mes', 'deoia-subscriptions' ); ?></li>
-							<li><?php echo esc_html__( '700 sincronizaciones con Google Calendar al mes', 'deoia-subscriptions' ); ?></li>
+							<li><?php echo esc_html__( '700 sincronizaciones Calendar y notificaciones push al mes', 'deoia-subscriptions' ); ?></li>
 						</ul>
 						<button type="button" class="deoia-subscription-plan__cta deoia-subscription-plan__cta--pro" id="deoia-plan-pro-cta"><?php echo esc_html__( 'Continuar con PRO', 'deoia-subscriptions' ); ?></button>
 					</div>
