@@ -1,0 +1,116 @@
+name: Build plugin zip and attach to GitHub Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate tag matches plugin versions
+        run: |
+          set -euo pipefail
+
+          TAG_NAME="${GITHUB_REF_NAME}"
+          EXPECTED_VERSION="${TAG_NAME#v}"
+
+          if [ "${TAG_NAME}" = "${EXPECTED_VERSION}" ] || [ -z "${EXPECTED_VERSION}" ]; then
+            echo "ERROR: Tag must look like vX.Y.Z (got: ${TAG_NAME})"
+            exit 1
+          fi
+
+          HEADER_VERSION="$(
+            grep -E '^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*' deoia-subscriptions.php \
+              | head -n 1 \
+              | sed -E 's/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*//' \
+              | tr -d '[:space:]'
+          )"
+
+          CONST_VERSION="$(
+            grep -E "define\(\s*'DEOIA_SUBSCRIPTIONS_VERSION'\s*,\s*'[^']+'\s*\)" deoia-subscriptions.php \
+              | head -n 1 \
+              | sed -E "s/.*'DEOIA_SUBSCRIPTIONS_VERSION'\s*,\s*'([^']+)'.*/\1/"
+          )"
+
+          echo "Tag version:    ${EXPECTED_VERSION}"
+          echo "Header Version: ${HEADER_VERSION}"
+          echo "Constant:       ${CONST_VERSION}"
+
+          if [ "${HEADER_VERSION}" != "${EXPECTED_VERSION}" ]; then
+            echo "ERROR: Header Version (${HEADER_VERSION}) does not match tag (${EXPECTED_VERSION})"
+            exit 1
+          fi
+
+          if [ "${CONST_VERSION}" != "${EXPECTED_VERSION}" ]; then
+            echo "ERROR: DEOIA_SUBSCRIPTIONS_VERSION (${CONST_VERSION}) does not match tag (${EXPECTED_VERSION})"
+            exit 1
+          fi
+
+      - name: Build clean plugin zip (single root folder)
+        run: |
+          set -euo pipefail
+
+          PLUGIN_SLUG="deoia-subscriptions"
+          ZIP_NAME="${PLUGIN_SLUG}.zip"
+
+          rm -rf dist
+          mkdir -p "dist/${PLUGIN_SLUG}"
+
+          rsync -av \
+            --exclude ".git/" \
+            --exclude ".github/" \
+            --exclude "/tests/" \
+            --exclude "/node_modules/" \
+            --exclude "/vendor/" \
+            --exclude ".vscode/" \
+            --exclude ".idea/" \
+            --exclude ".cursor/" \
+            --exclude ".DS_Store" \
+            --exclude "*.zip" \
+            --exclude "/dist/" \
+            --exclude "/build/" \
+            --exclude "/coverage/" \
+            --exclude ".env" \
+            --exclude ".env.*" \
+            --exclude "*.log" \
+            --exclude ".phpunit.result.cache" \
+            ./ "dist/${PLUGIN_SLUG}/"
+
+          if [ -d "dist/${PLUGIN_SLUG}/${PLUGIN_SLUG}" ]; then
+            echo "Found nested ${PLUGIN_SLUG}/${PLUGIN_SLUG}. Flattening..."
+            rsync -av "dist/${PLUGIN_SLUG}/${PLUGIN_SLUG}/" "dist/${PLUGIN_SLUG}/"
+            rm -rf "dist/${PLUGIN_SLUG:?}/${PLUGIN_SLUG}"
+          fi
+
+          if [ ! -f "dist/${PLUGIN_SLUG}/${PLUGIN_SLUG}.php" ]; then
+            echo "ERROR: Missing dist/${PLUGIN_SLUG}/${PLUGIN_SLUG}.php"
+            exit 1
+          fi
+
+          if [ ! -d "dist/${PLUGIN_SLUG}/plugin-update-checker" ]; then
+            echo "ERROR: Missing dist/${PLUGIN_SLUG}/plugin-update-checker"
+            exit 1
+          fi
+
+          if [ -d "dist/${PLUGIN_SLUG}/tests" ]; then
+            echo "ERROR: tests/ must not be packaged"
+            exit 1
+          fi
+
+          (cd dist && zip -r "../${ZIP_NAME}" "${PLUGIN_SLUG}")
+
+          echo "Built ${ZIP_NAME}"
+          unzip -l "${ZIP_NAME}" | head -n 40
+
+      - name: Upload zip to the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: deoia-subscriptions.zip

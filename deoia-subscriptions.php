@@ -2,9 +2,10 @@
 /**
  * Plugin Name: DEOIA Subscriptions
  * Description: Formulario de suscripción y Checkout Session de Stripe (REST).
- * Version: 1.6.3
+ * Version: 1.6.4
  * Author: DEOIA
  * Text Domain: deoia-subscriptions
+ * Update URI: https://github.com/RobertoTD/deoia-subscriptions
  *
  * @package DeoiaSubscriptions
  */
@@ -15,9 +16,46 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.6.3' );
+define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.6.4' );
 define( 'DEOIA_SUBSCRIPTIONS_FILE', __FILE__ );
 define( 'DEOIA_SUBSCRIPTIONS_DIR', plugin_dir_path( __FILE__ ) );
+
+/**
+ * Bootstrap Plugin Update Checker (GitHub Release assets).
+ *
+ * Fail-soft: missing library, constructor failures, or GitHub unavailability
+ * must not break shortcodes/REST. PUC itself caches checks and does not embed tokens.
+ */
+function deoia_subscriptions_bootstrap_update_checker(): void {
+	$bootstrap = DEOIA_SUBSCRIPTIONS_DIR . 'plugin-update-checker/plugin-update-checker.php';
+	if ( ! is_readable( $bootstrap ) ) {
+		return;
+	}
+
+	try {
+		require_once $bootstrap;
+
+		if ( ! class_exists( \YahnisElsts\PluginUpdateChecker\v5\PucFactory::class ) ) {
+			return;
+		}
+
+		$update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+			'https://github.com/RobertoTD/deoia-subscriptions/',
+			DEOIA_SUBSCRIPTIONS_FILE,
+			'deoia-subscriptions'
+		);
+
+		$update_checker->setBranch( 'master' );
+
+		$vcs_api = $update_checker->getVcsApi();
+		if ( is_object( $vcs_api ) && method_exists( $vcs_api, 'enableReleaseAssets' ) ) {
+			$vcs_api->enableReleaseAssets();
+		}
+	} catch ( Throwable ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch -- Fail-soft updates.
+		// Updates unavailable; plugin remains usable.
+	}
+}
+deoia_subscriptions_bootstrap_update_checker();
 
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/freemium-abuse-guards.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/domain/email/email-typo-guard.php';
@@ -27,6 +65,9 @@ require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-access-request.ph
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-dashboard.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/portal-billing.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/subscription-thank-you-shortcode.php';
+require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/legal/legal-document-client.php';
+require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/legal/legal-document-render.php';
+require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/legal/legal-document-shortcodes.php';
 
 add_action( 'template_redirect', 'deoia_subscriptions_portal_handle_magic_link_verify', 1 );
 add_action( 'template_redirect', 'deoia_subscriptions_portal_handle_access_request_post', 2 );
