@@ -389,10 +389,10 @@ try {
 	exit( 1 );
 }
 
-if ( ! defined( 'DEOIA_SUBSCRIPTIONS_VERSION' ) || DEOIA_SUBSCRIPTIONS_VERSION !== '1.6.4' ) {
-	deoia_puc_smoke_fail( 'DEOIA_SUBSCRIPTIONS_VERSION must be 1.6.4' );
+if ( ! defined( 'DEOIA_SUBSCRIPTIONS_VERSION' ) || DEOIA_SUBSCRIPTIONS_VERSION !== '1.6.5' ) {
+	deoia_puc_smoke_fail( 'DEOIA_SUBSCRIPTIONS_VERSION must be 1.6.5' );
 } else {
-	deoia_puc_smoke_pass( 'version constant is 1.6.4' );
+	deoia_puc_smoke_pass( 'version constant is 1.6.5' );
 }
 
 $src = (string) file_get_contents( $main );
@@ -443,6 +443,12 @@ if ( ! function_exists( 'deoia_subscriptions_render_legal_terms_shortcode' ) ) {
 	deoia_puc_smoke_fail( 'legal shortcodes not loaded (WIP must be preserved)' );
 } else {
 	deoia_puc_smoke_pass( 'legal WIP still loaded' );
+}
+
+if ( ! function_exists( 'deoia_subscriptions_resolve_privacy_notice_meta' ) ) {
+	deoia_puc_smoke_fail( 'privacy consent helpers not loaded' );
+} else {
+	deoia_puc_smoke_pass( 'privacy consent helpers loaded' );
 }
 
 if ( $failures > 0 ) {

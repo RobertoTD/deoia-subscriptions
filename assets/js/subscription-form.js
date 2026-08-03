@@ -73,7 +73,19 @@
 		var slugInput = document.getElementById('deoia-desired-slug');
 		var hiddenSlugInput = document.getElementById('deoia-desired-slug-hidden');
 		var suggestionsEl = document.getElementById('deoia-slug-suggestions');
+		var privacyBlock = document.getElementById('deoia-subscription-privacy');
+		var privacyConsentInput = document.getElementById('deoia-privacy-consent');
+		var privacyVersionEl = document.getElementById('deoia-privacy-notice-version');
+		var privacyLinkEl = document.getElementById('deoia-privacy-integral-link');
 		var publicDomain = cfg.publicDomain || 'deoia.com';
+		var privacyNoticeVersion =
+			(privacyBlock && privacyBlock.getAttribute('data-privacy-version')) ||
+			cfg.privacyNoticeVersion ||
+			'';
+		var privacyNoticeUrl =
+			(privacyBlock && privacyBlock.getAttribute('data-privacy-url')) ||
+			cfg.privacyNoticeUrl ||
+			'';
 		var debounceTimer = null;
 		var requestSeq = 0;
 		var activeController = null;
@@ -418,7 +430,9 @@
 				agenda_name: agendaName.trim(),
 				email: email.trim(),
 				owner_name: ownerName.trim(),
-				desired_slug: desiredSlug.trim()
+				desired_slug: desiredSlug.trim(),
+				privacy_consent: Boolean(privacyConsentInput && privacyConsentInput.checked),
+				privacy_notice_version: privacyNoticeVersion || ''
 			};
 		}
 
@@ -427,6 +441,104 @@
 			var website = (form.querySelector('[name="website"]') || {}).value || '';
 			payload.website = website.trim();
 			return payload;
+		}
+
+		function validatePrivacyConsentBeforeSubmit() {
+			if (!privacyNoticeVersion) {
+				return 'No pudimos cargar el Aviso de Privacidad. Recarga la página e intenta de nuevo.';
+			}
+			if (!privacyConsentInput || !privacyConsentInput.checked) {
+				return 'Debes aceptar el Aviso de Privacidad para continuar.';
+			}
+			return '';
+		}
+
+		function applyPrivacyNoticeMeta(meta) {
+			if (!meta || !meta.version) {
+				return false;
+			}
+
+			var previousVersion = privacyNoticeVersion;
+			privacyNoticeVersion = String(meta.version);
+			if (meta.url) {
+				privacyNoticeUrl = String(meta.url);
+			}
+
+			if (privacyBlock) {
+				privacyBlock.setAttribute('data-privacy-version', privacyNoticeVersion);
+				if (privacyNoticeUrl) {
+					privacyBlock.setAttribute('data-privacy-url', privacyNoticeUrl);
+				}
+			}
+			if (privacyVersionEl) {
+				privacyVersionEl.textContent = privacyNoticeVersion;
+			}
+			if (privacyLinkEl && privacyNoticeUrl) {
+				privacyLinkEl.setAttribute('href', privacyNoticeUrl);
+			}
+
+			if (previousVersion && previousVersion !== privacyNoticeVersion && privacyConsentInput) {
+				privacyConsentInput.checked = false;
+			}
+
+			return true;
+		}
+
+		function refreshPrivacyNoticeMeta() {
+			var metaUrl = cfg.privacyNoticeMetaUrl;
+			if (!metaUrl) {
+				return Promise.resolve(false);
+			}
+
+			var separator = metaUrl.indexOf('?') >= 0 ? '&' : '?';
+			return fetch(metaUrl + separator + 'refresh=1', {
+				method: 'GET',
+				credentials: 'same-origin',
+				headers: {
+					'X-WP-Nonce': cfg.nonce || ''
+				}
+			})
+				.then(function (res) {
+					return res.json().then(function (data) {
+						return { ok: res.ok, data: data };
+					});
+				})
+				.then(function (result) {
+					if (!result.ok || !result.data || !result.data.ok) {
+						return false;
+					}
+					return applyPrivacyNoticeMeta(result.data);
+				})
+				.catch(function () {
+					return false;
+				});
+		}
+
+		function handlePrivacyVersionOutdated(data) {
+			if (!data || data.error !== 'privacy_notice_version_outdated') {
+				return false;
+			}
+
+			setPlanSelectionVisible(false);
+			showError(
+				errorsEl,
+				'El Aviso de Privacidad se actualizó. Léelo de nuevo y vuelve a aceptar para continuar.'
+			);
+
+			refreshPrivacyNoticeMeta().then(function (updated) {
+				if (!updated && data.current_version) {
+					applyPrivacyNoticeMeta({
+						version: data.current_version,
+						url: privacyNoticeUrl
+					});
+				}
+				if (privacyConsentInput) {
+					privacyConsentInput.checked = false;
+					privacyConsentInput.focus();
+				}
+			});
+
+			return true;
 		}
 
 		function setPlanSelectionVisible(visible) {
@@ -457,6 +569,17 @@
 		function startPlan(url, onSuccess, getPayload) {
 			showError(errorsEl, '');
 			setPlanButtonsDisabled(true);
+
+			var privacyError = validatePrivacyConsentBeforeSubmit();
+			if (privacyError) {
+				showError(errorsEl, privacyError);
+				setPlanSelectionVisible(false);
+				if (privacyConsentInput) {
+					privacyConsentInput.focus();
+				}
+				setPlanButtonsDisabled(false);
+				return;
+			}
 
 			var emailSubmitError = validateEmailBeforeSubmit();
 			if (emailSubmitError) {
@@ -489,6 +612,9 @@
 					if (result.ok && onSuccess(result.data)) {
 						return;
 					}
+					if (handlePrivacyVersionOutdated(result.data)) {
+						return;
+					}
 					if (handleSlugStartError(result.data, result.status)) {
 						setPlanSelectionVisible(false);
 						return;
@@ -500,6 +626,10 @@
 						(result.data && result.data.error) ||
 						(result.data && result.data.message) ||
 						'No se pudo continuar. Intenta de nuevo.';
+					if (msg === 'privacy_consent_required') {
+						msg = 'Debes aceptar el Aviso de Privacidad para continuar.';
+						setPlanSelectionVisible(false);
+					}
 					showError(errorsEl, typeof msg === 'string' ? msg : 'Error desconocido.');
 				})
 				.catch(function () {
@@ -534,6 +664,15 @@
 				var emailInput = form.querySelector('[name="email"]');
 				if (emailInput) {
 					emailInput.focus();
+				}
+				return;
+			}
+
+			var privacyError = validatePrivacyConsentBeforeSubmit();
+			if (privacyError) {
+				showError(errorsEl, privacyError);
+				if (privacyConsentInput) {
+					privacyConsentInput.focus();
 				}
 				return;
 			}

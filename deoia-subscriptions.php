@@ -2,7 +2,7 @@
 /**
  * Plugin Name: DEOIA Subscriptions
  * Description: Formulario de suscripción y Checkout Session de Stripe (REST).
- * Version: 1.6.4
+ * Version: 1.6.5
  * Author: DEOIA
  * Text Domain: deoia-subscriptions
  * Update URI: https://github.com/RobertoTD/deoia-subscriptions
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.6.4' );
+define( 'DEOIA_SUBSCRIPTIONS_VERSION', '1.6.5' );
 define( 'DEOIA_SUBSCRIPTIONS_FILE', __FILE__ );
 define( 'DEOIA_SUBSCRIPTIONS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -68,6 +68,7 @@ require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/portal/subscription-thank-you-s
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/legal/legal-document-client.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/legal/legal-document-render.php';
 require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/legal/legal-document-shortcodes.php';
+require_once DEOIA_SUBSCRIPTIONS_DIR . 'includes/legal/privacy-consent.php';
 
 add_action( 'template_redirect', 'deoia_subscriptions_portal_handle_magic_link_verify', 1 );
 add_action( 'template_redirect', 'deoia_subscriptions_portal_handle_access_request_post', 2 );
@@ -108,18 +109,23 @@ function deoia_subscriptions_register_assets(): void {
 		true
 	);
 
+	$privacy_meta = deoia_subscriptions_resolve_privacy_notice_meta( false );
+
 	wp_localize_script(
 		'deoia-subscription-form',
 		'deoiaSubscriptions',
 		array(
-			'restUrl'             => esc_url_raw( rest_url( 'deoia/v1/start-subscription' ) ),
-			'freemiumUrl'         => esc_url_raw( rest_url( 'deoia/v1/start-freemium-subscription' ) ),
-			'slugAvailabilityUrl' => esc_url_raw( rest_url( 'deoia/v1/slug-availability' ) ),
-			'freemiumRedirectUrl' => esc_url_raw( deoia_subscriptions_resolve_thank_you_page_url() ),
-			'publicDomain'        => defined( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) && is_string( constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) ) && constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) !== ''
+			'restUrl'               => esc_url_raw( rest_url( 'deoia/v1/start-subscription' ) ),
+			'freemiumUrl'           => esc_url_raw( rest_url( 'deoia/v1/start-freemium-subscription' ) ),
+			'slugAvailabilityUrl'   => esc_url_raw( rest_url( 'deoia/v1/slug-availability' ) ),
+			'privacyNoticeMetaUrl'  => esc_url_raw( rest_url( 'deoia/v1/privacy-notice-meta' ) ),
+			'freemiumRedirectUrl'   => esc_url_raw( deoia_subscriptions_resolve_thank_you_page_url() ),
+			'publicDomain'          => defined( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) && is_string( constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) ) && constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) !== ''
 				? sanitize_text_field( (string) constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) )
 				: 'deoia.com',
-			'nonce'               => wp_create_nonce( 'wp_rest' ),
+			'privacyNoticeVersion'  => $privacy_meta ? (string) $privacy_meta['version'] : '',
+			'privacyNoticeUrl'      => $privacy_meta ? esc_url_raw( (string) $privacy_meta['url'] ) : '',
+			'nonce'                 => wp_create_nonce( 'wp_rest' ),
 		)
 	);
 }
@@ -138,6 +144,9 @@ function deoia_subscriptions_render_form_shortcode(): string {
 	$public_domain  = defined( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) && is_string( constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) ) && constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' ) !== ''
 		? (string) constant( 'DEOIA_SUBSCRIPTIONS_PUBLIC_DOMAIN' )
 		: 'deoia.com';
+	$privacy_meta   = deoia_subscriptions_resolve_privacy_notice_meta( false );
+	$privacy_version = $privacy_meta ? (string) $privacy_meta['version'] : '';
+	$privacy_url     = $privacy_meta ? (string) $privacy_meta['url'] : '';
 
 	ob_start();
 	?>
@@ -195,6 +204,37 @@ function deoia_subscriptions_render_form_shortcode(): string {
 						autocomplete="off"
 					>
 				</p>
+				<div
+					class="deoia-subscription-form__privacy"
+					id="deoia-subscription-privacy"
+					data-privacy-version="<?php echo esc_attr( $privacy_version ); ?>"
+					data-privacy-url="<?php echo esc_url( $privacy_url ); ?>"
+				>
+					<p class="deoia-subscription-form__privacy-notice" id="deoia-privacy-notice">
+						<?php
+						echo esc_html(
+							'Responsable: ROBERTO TEJADA DUBOIS, con domicilio en Prolongación Xicohténcatl número 12, Santa María Ixtulco, Tlaxcala, Tlaxcala, México. Trataremos tus datos de identidad y contacto, así como los relativos a tu negocio, cuenta, instalación, suscripción y seguridad, para gestionar tu solicitud, crear y administrar tu cuenta y agenda, autenticar accesos, prestar y proteger el servicio, cumplir obligaciones legales y conservar evidencia. Puedes ejercer tus derechos ARCO, revocar tu consentimiento o solicitar la limitación del uso o divulgación escribiendo a atencion@deoia.com. '
+						);
+						?>
+						<?php if ( $privacy_url !== '' ) : ?>
+							<a class="deoia-subscription-form__privacy-link" id="deoia-privacy-integral-link" href="<?php echo esc_url( $privacy_url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__( 'Consulta el Aviso de Privacidad Integral', 'deoia-subscriptions' ); ?></a>
+						<?php else : ?>
+							<?php echo esc_html__( 'Consulta el Aviso de Privacidad Integral', 'deoia-subscriptions' ); ?>
+						<?php endif; ?>
+						<?php echo esc_html( ', versión ' ); ?>
+						<span id="deoia-privacy-notice-version"><?php echo esc_html( $privacy_version !== '' ? $privacy_version : '—' ); ?></span><?php echo esc_html( '.' ); ?>
+					</p>
+					<p class="deoia-subscription-form__privacy-consent">
+						<input
+							type="checkbox"
+							id="deoia-privacy-consent"
+							name="privacy_consent"
+							value="1"
+							required
+						>
+						<label for="deoia-privacy-consent"><?php echo esc_html( DEOIA_SUBSCRIPTION_PRIVACY_CONSENT_TEXT ); ?></label>
+					</p>
+				</div>
 				<p class="deoia-subscription-form__errors" id="deoia-subscription-errors" hidden></p>
 				<p class="deoia-subscription-form__actions">
 					<button type="submit" class="deoia-subscription-form__submit" id="deoia-subscription-submit"><?php echo esc_html__( 'Crear mi agenda', 'deoia-subscriptions' ); ?></button>
@@ -471,6 +511,11 @@ function deoia_subscriptions_rest_start_subscription( WP_REST_Request $request )
 		return deoia_subscriptions_rest_error( __( 'Correo electrónico no válido.', 'deoia-subscriptions' ), 400 );
 	}
 
+	$privacy_error = deoia_subscriptions_rest_validate_privacy_consent( $request );
+	if ( $privacy_error instanceof WP_REST_Response ) {
+		return $privacy_error;
+	}
+
 	$email_typo_result = deoia_subscriptions_validate_subscription_email( $email );
 	if ( empty( $email_typo_result['ok'] ) ) {
 		return deoia_subscriptions_rest_email_typo_error( $email_typo_result, 400 );
@@ -481,6 +526,7 @@ function deoia_subscriptions_rest_start_subscription( WP_REST_Request $request )
 	}
 
 	$backend_url = (string) constant( 'DEOIA_SUBSCRIPTIONS_BACKEND_START_URL' );
+	$privacy_notice_version = deoia_subscriptions_request_privacy_notice_version( $request );
 
 	$response = wp_remote_post(
 		$backend_url,
@@ -491,10 +537,12 @@ function deoia_subscriptions_rest_start_subscription( WP_REST_Request $request )
 			),
 			'body'    => wp_json_encode(
 				array(
-					'agenda_name' => $agenda_name,
-					'owner_name'  => $owner_name,
-					'email'       => $email,
-					'desired_slug' => $desired_slug,
+					'agenda_name'            => $agenda_name,
+					'owner_name'             => $owner_name,
+					'email'                  => $email,
+					'desired_slug'           => $desired_slug,
+					'privacy_consent'        => true,
+					'privacy_notice_version' => $privacy_notice_version,
 				)
 			),
 		)
@@ -556,6 +604,11 @@ function deoia_subscriptions_rest_start_freemium_subscription( WP_REST_Request $
 		return deoia_subscriptions_rest_error( __( 'Correo electrónico no válido.', 'deoia-subscriptions' ), 400 );
 	}
 
+	$privacy_error = deoia_subscriptions_rest_validate_privacy_consent( $request );
+	if ( $privacy_error instanceof WP_REST_Response ) {
+		return $privacy_error;
+	}
+
 	$email_typo_result = deoia_subscriptions_validate_subscription_email( $email );
 	if ( empty( $email_typo_result['ok'] ) ) {
 		return deoia_subscriptions_rest_email_typo_error( $email_typo_result, 400 );
@@ -574,6 +627,8 @@ function deoia_subscriptions_rest_start_freemium_subscription( WP_REST_Request $
 		return deoia_subscriptions_rest_error( 'Backend de suscripciones no configurado.', 500 );
 	}
 
+	$privacy_notice_version = deoia_subscriptions_request_privacy_notice_version( $request );
+
 	$response = wp_remote_post(
 		$backend_url,
 		array(
@@ -583,10 +638,12 @@ function deoia_subscriptions_rest_start_freemium_subscription( WP_REST_Request $
 			),
 			'body'    => wp_json_encode(
 				array(
-					'agenda_name'  => $agenda_name,
-					'owner_name'   => $owner_name,
-					'email'        => $email,
-					'desired_slug' => $desired_slug,
+					'agenda_name'            => $agenda_name,
+					'owner_name'             => $owner_name,
+					'email'                  => $email,
+					'desired_slug'           => $desired_slug,
+					'privacy_consent'        => true,
+					'privacy_notice_version' => $privacy_notice_version,
 				)
 			),
 		)
@@ -783,9 +840,45 @@ function deoia_subscriptions_rest_stripe_webhook( WP_REST_Request $request ): WP
 }
 
 /**
+ * GET /wp-json/deoia/v1/privacy-notice-meta
+ *
+ * Returns current privacy notice version + public URL from the legal resolver.
+ *
+ * @param WP_REST_Request $request Request.
+ * @return WP_REST_Response
+ */
+function deoia_subscriptions_rest_privacy_notice_meta( WP_REST_Request $request ): WP_REST_Response {
+	$refresh = deoia_subscriptions_privacy_consent_is_true( $request->get_param( 'refresh' ) );
+	$meta    = deoia_subscriptions_resolve_privacy_notice_meta( $refresh );
+
+	if ( $meta === null ) {
+		return new WP_REST_Response(
+			array(
+				'ok'    => false,
+				'error' => 'privacy_notice_unavailable',
+			),
+			503
+		);
+	}
+
+	return new WP_REST_Response(
+		array(
+			'ok'           => true,
+			'locale'       => $meta['locale'],
+			'documentType' => $meta['documentType'],
+			'version'      => $meta['version'],
+			'url'          => $meta['url'],
+		),
+		200
+	);
+}
+
+/**
  * Registra rutas REST.
  */
 function deoia_subscriptions_register_rest_routes(): void {
+	$privacy_args = deoia_subscriptions_rest_privacy_consent_args();
+
 	register_rest_route(
 		'deoia/v1',
 		'/start-subscription',
@@ -793,27 +886,30 @@ function deoia_subscriptions_register_rest_routes(): void {
 			'methods'             => 'POST',
 			'callback'            => 'deoia_subscriptions_rest_start_subscription',
 			'permission_callback' => '__return_true',
-			'args'                => array(
-				'agenda_name' => array(
-					'type'              => 'string',
-					'required'          => false,
-					'sanitize_callback' => 'sanitize_text_field',
+			'args'                => array_merge(
+				array(
+					'agenda_name' => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'email'       => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_email',
+					),
+					'owner_name'  => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'desired_slug' => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
 				),
-				'email'       => array(
-					'type'              => 'string',
-					'required'          => false,
-					'sanitize_callback' => 'sanitize_email',
-				),
-				'owner_name'  => array(
-					'type'              => 'string',
-					'required'          => false,
-					'sanitize_callback' => 'sanitize_text_field',
-				),
-				'desired_slug' => array(
-					'type'              => 'string',
-					'required'          => false,
-					'sanitize_callback' => 'sanitize_text_field',
-				),
+				$privacy_args
 			),
 		)
 	);
@@ -825,31 +921,49 @@ function deoia_subscriptions_register_rest_routes(): void {
 			'methods'             => 'POST',
 			'callback'            => 'deoia_subscriptions_rest_start_freemium_subscription',
 			'permission_callback' => '__return_true',
+			'args'                => array_merge(
+				array(
+					'agenda_name'  => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'email'        => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_email',
+					),
+					'owner_name'   => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'desired_slug' => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'website'      => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+				$privacy_args
+			),
+		)
+	);
+
+	register_rest_route(
+		'deoia/v1',
+		'/privacy-notice-meta',
+		array(
+			'methods'             => 'GET',
+			'callback'            => 'deoia_subscriptions_rest_privacy_notice_meta',
+			'permission_callback' => '__return_true',
 			'args'                => array(
-				'agenda_name'  => array(
-					'type'              => 'string',
-					'required'          => false,
-					'sanitize_callback' => 'sanitize_text_field',
-				),
-				'email'        => array(
-					'type'              => 'string',
-					'required'          => false,
-					'sanitize_callback' => 'sanitize_email',
-				),
-				'owner_name'   => array(
-					'type'              => 'string',
-					'required'          => false,
-					'sanitize_callback' => 'sanitize_text_field',
-				),
-				'desired_slug' => array(
-					'type'              => 'string',
-					'required'          => false,
-					'sanitize_callback' => 'sanitize_text_field',
-				),
-				'website'      => array(
-					'type'              => 'string',
-					'required'          => false,
-					'sanitize_callback' => 'sanitize_text_field',
+				'refresh' => array(
+					'required' => false,
 				),
 			),
 		)

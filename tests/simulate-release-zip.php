@@ -128,11 +128,11 @@ if ( ! preg_match( "/define\(\s*'DEOIA_SUBSCRIPTIONS_VERSION'\s*,\s*'([^']+)'\s*
 	fwrite( STDERR, "FAIL  cannot parse DEOIA_SUBSCRIPTIONS_VERSION\n" );
 	exit( 1 );
 }
-if ( $hm[1] !== $cm[1] || $hm[1] !== '1.6.4' ) {
+if ( $hm[1] !== $cm[1] || $hm[1] !== '1.6.5' ) {
 	fwrite( STDERR, "FAIL  version mismatch header={$hm[1]} const={$cm[1]}\n" );
 	exit( 1 );
 }
-echo "PASS  version alignment header/const=1.6.4\n";
+echo "PASS  version alignment header/const=1.6.5\n";
 
 $zip = new ZipArchive();
 if ( $zip->open( $zip_path, ZipArchive::CREATE | ZipArchive::OVERWRITE ) !== true ) {

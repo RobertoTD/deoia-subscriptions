@@ -418,8 +418,50 @@
 .deoia-subscription-form.is-selecting-plan .deoia-subscription-form__slug-status,
 .deoia-subscription-form.is-selecting-plan .deoia-subscription-form__slug-field,
 .deoia-subscription-form.is-selecting-plan .deoia-subscription-form__slug-suggestions,
+.deoia-subscription-form.is-selecting-plan .deoia-subscription-form__privacy,
 .deoia-subscription-form.is-selecting-plan .deoia-subscription-form__trust {
 	display: none !important;
+}
+
+.deoia-subscription-form__privacy {
+	margin: 0.75rem 0 0;
+	padding: 0.75rem 0 0;
+	border-top: 1px solid var(--deoia-sub-input-border);
+}
+
+.deoia-wysiwyg .deoia-subscription-form__privacy-notice,
+.deoia-subscription-form__privacy-notice {
+	margin: 0;
+	font-size: 0.75rem;
+	line-height: 1.45;
+	color: var(--deoia-sub-muted);
+}
+
+.deoia-subscription-form__privacy-link {
+	color: var(--deoia-sub-accent);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.deoia-subscription-form__privacy-consent {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	margin: 0.75rem 0 0;
+}
+
+.deoia-subscription-form__privacy-consent input[type="checkbox"] {
+	margin-top: 0.2rem;
+	flex: 0 0 auto;
+}
+
+.deoia-wysiwyg .deoia-subscription-form__privacy-consent label,
+.deoia-subscription-form__privacy-consent label {
+	margin: 0;
+	font-size: 0.75rem;
+	line-height: 1.45;
+	color: var(--deoia-sub-text);
+	font-weight: 400;
 }
 
 .deoia-subscription-plans {

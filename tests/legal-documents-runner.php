@@ -462,7 +462,7 @@ deoia_test(
 	'no client-side JavaScript or fetch helpers in legal modules',
 	static function (): void {
 		$dir = dirname( __DIR__ ) . '/includes/legal';
-		foreach ( array( 'legal-document-client.php', 'legal-document-render.php', 'legal-document-shortcodes.php' ) as $file ) {
+		foreach ( array( 'legal-document-client.php', 'legal-document-render.php', 'legal-document-shortcodes.php', 'privacy-consent.php' ) as $file ) {
 			$src = (string) file_get_contents( $dir . '/' . $file );
 			deoia_assert_not_contains( 'wp_enqueue_script', $src, $file );
 			deoia_assert_not_contains( 'fetch(', $src, $file );
